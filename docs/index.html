@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首末件检查表系统</title>
+<script src="api.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:"Microsoft YaHei",sans-serif; background:#f5f5f5; padding-top:56px; }
+.navbar { position:fixed; top:0; left:0; right:0; background:#1a73e8; color:#fff; display:flex; align-items:center; padding:8px 16px; z-index:1000; height:56px; flex-wrap:wrap; }
+.navbar .title { font-size:16px; font-weight:bold; margin-right:auto; }
+.navbar .tabs { display:flex; gap:4px; }
+.navbar .tabs button { background:rgba(255,255,255,0.2); border:none; color:#fff; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:13px; }
+.navbar .tabs button.active { background:#fff; color:#1a73e8; }
+.navbar .user-info { margin-left:12px; font-size:13px; display:flex; align-items:center; gap:8px; }
+.navbar .user-info button { background:rgba(255,255,255,0.3); border:none; color:#fff; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; }
+.container { max-width:900px; margin:16px auto; padding:0 12px; }
+.card { background:#fff; border-radius:8px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+.page { display:none; }
+.page.active { display:block; }
+
+/* Login */
+#loginPage { display:flex; justify-content:center; align-items:center; min-height:80vh; }
+#loginPage .card { width:100%; max-width:360px; }
+#loginPage h2 { text-align:center; margin-bottom:16px; }
+#loginPage input { width:100%; padding:10px; border:1px solid #ddd; border-radius:4px; margin-bottom:12px; font-size:14px; }
+#loginPage button { width:100%; padding:10px; background:#1a73e8; color:#fff; border:none; border-radius:4px; font-size:15px; cursor:pointer; }
+#loginPage .hint { font-size:12px; color:#888; margin-top:8px; line-height:1.6; }
+
+/* Form page - checklist style */
+.form-header { text-align:center; margin-bottom:12px; }
+.form-header .doc-no { text-align:right; font-size:12px; color:#555; }
+.form-header h2 { font-size:18px; margin:8px 0; }
+.form-meta { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; font-size:13px; }
+.form-meta label { margin-right:4px; }
+.section-title { background:#b4c6e7; padding:6px 12px; font-weight:bold; font-size:14px; margin:12px 0 8px; border-radius:4px; }
+.section-title.eng { background:#c6e0b4; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; margin-bottom:12px; }
+.form-grid.col3 { grid-template-columns:1fr 1fr 1fr; }
+.form-grid label { font-size:13px; display:flex; flex-direction:column; }
+.form-grid label input, .form-grid label select, .form-grid label textarea { margin-top:2px; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px; }
+.radio-group { display:flex; gap:12px; align-items:center; font-size:13px; margin:4px 0; }
+.radio-group label { flex-direction:row; align-items:center; gap:4px; }
+
+/* Checklist table */
+.table-wrap { overflow-x:auto; margin:12px 0; }
+.checklist-table { width:100%; border-collapse:collapse; font-size:12px; min-width:700px; }
+.checklist-table th, .checklist-table td { border:1px solid #333; padding:4px 6px; text-align:center; }
+.checklist-table th { background:#d9e2f3; font-weight:bold; }
+.checklist-table td.left { text-align:left; }
+.checklist-table input[type=text] { width:60px; padding:2px; font-size:12px; border:1px solid #ccc; border-radius:2px; }
+.checklist-table select { font-size:12px; padding:1px; }
+
+.submit-btn { display:block; width:100%; max-width:300px; margin:16px auto; padding:12px; background:#1a73e8; color:#fff; border:none; border-radius:6px; font-size:16px; cursor:pointer; }
+.submit-btn:disabled { background:#aaa; }
+
+/* Approval & History */
+.list-item { padding:12px; border:1px solid #eee; border-radius:6px; margin-bottom:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+.list-item:hover { background:#f9f9f9; }
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; color:#fff; }
+.badge-submitted { background:#fb8c00; }
+.badge-engineering { background:#1a73e8; }
+.badge-approved { background:#43a047; }
+.badge-rejected { background:#e53935; }
+.detail-panel { background:#fafafa; border:1px solid #ddd; border-radius:6px; padding:16px; margin-top:8px; }
+.detail-panel .actions { margin-top:12px; display:flex; gap:8px; }
+.detail-panel .actions button { padding:8px 16px; border:none; border-radius:4px; color:#fff; cursor:pointer; font-size:14px; }
+.btn-approve { background:#43a047; }
+.btn-reject { background:#e53935; }
+.filter-bar { margin-bottom:12px; }
+.filter-bar select { padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px; }
+
+@media(max-width:600px){
+  .navbar { padding:6px 10px; }
+  .navbar .title { font-size:14px; }
+  .form-grid { grid-template-columns:1fr; }
+  .form-grid.col3 { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="loginPage" class="page active">
+<div class="card">
+  <h2>首末件检查表系统</h2>
+  <input type="text" id="badgeInput" placeholder="请输入工号">
+  <button onclick="doLogin()">登录</button>
+  <div class="hint">测试账号：P001(操作员) / E001(工程师) / Q001(质量) / A001(管理员)</div>
+</div>
+</div>
+
+<!-- Main App -->
+<div id="mainApp" style="display:none">
+<nav class="navbar">
+  <span class="title">首末件检查表</span>
+  <div class="tabs">
+    <button class="active" onclick="switchTab('form')">填表</button>
+    <button onclick="switchTab('approval')">审批</button>
+    <button onclick="switchTab('history')">历史</button>
+  </div>
+  <div class="user-info">
+    <span id="userName"></span>
+    <button onclick="doLogout()">退出</button>
+  </div>
+</nav>
+
+<!-- Form Tab -->
+<div id="tab-form" class="page active">
+<div class="container">
+<div class="card">
+  <div class="form-header">
+    <div class="doc-no">文件编号 P09-S10-F01-020 / 版次 A0</div>
+    <h2>首末件检查表（CX1E_16AUD）</h2>
+    <div class="form-meta">
+      <span>模板编号 P09-S10-F01</span>
+      <span style="margin-left:auto">
+        <label><input type="radio" name="f_type" value="首件" checked> 首件</label>
+        <label><input type="radio" name="f_type" value="末件"> 末件</label>
+      </span>
+      <span>版本 V1.0</span>
+    </div>
+  </div>
+
+  <!-- 生产填写区 -->
+  <div class="section-title">生产填写区</div>
+  <div class="form-grid col3">
+    <label>机型 <input type="text" id="f_model"></label>
+    <label>日期 <input type="date" id="f_date"></label>
+    <label>工单号 <input type="text" id="f_order"></label>
+    <label>批量 <input type="text" id="f_qty"></label>
+    <label>SN <input type="text" id="f_sn"></label>
+    <label>生产线 <input type="text" id="f_line"></label>
+    <label>料号 <input type="text" id="f_pn"></label>
+  </div>
+  <div class="radio-group">
+    <span>物料变更：</span>
+    <label><input type="radio" name="f_material_change" value="Y"> Y</label>
+    <label><input type="radio" name="f_material_change" value="N" checked> N</label>
+    <input type="text" id="f_material_remark" placeholder="备注" style="flex:1;padding:4px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+  </div>
+  <div class="radio-group">
+    <span>人员变更：</span>
+    <label><input type="radio" name="f_person_change" value="Y"> Y</label>
+    <label><input type="radio" name="f_person_change" value="N" checked> N</label>
+    <input type="text" id="f_person_remark" placeholder="备注" style="flex:1;padding:4px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+  </div>
+  <div class="radio-group">
+    <span>SOP一致：</span>
+    <label><input type="radio" name="f_sop_match" value="Y" checked> Y</label>
+    <label><input type="radio" name="f_sop_match" value="N"> N</label>
+    <input type="text" id="f_sop_remark" placeholder="备注" style="flex:1;padding:4px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+  </div>
+
+  <!-- 工程填写区 -->
+  <div class="section-title eng">工程填写区</div>
+  <div class="form-grid">
+    <label>工艺变更 <input type="text" id="f_process_change"></label>
+    <label>ECN <input type="text" id="f_ecn"></label>
+    <label>BOM <input type="text" id="f_bom"></label>
+    <label>设备参数 <input type="text" id="f_equip_param"></label>
+  </div>
+
+  <!-- 首末件确认 -->
+  <div class="section-title">首末件确认</div>
+  <div class="form-grid">
+    <label>上一工单号 <input type="text" id="f_prev_order"></label>
+    <label>末件SN <input type="text" id="f_last_sn"></label>
+    <label>日期 <input type="date" id="f_confirm_date"></label>
+    <label>判定
+      <select id="f_confirm_result"><option value="OK">OK</option><option value="NG">NG</option></select>
+    </label>
+  </div>
+
+  <!-- 42项检查表 -->
+  <div class="section-title">检查项目</div>
+  <div class="table-wrap">
+    <table class="checklist-table" id="checklistTable">
+      <thead>
+        <tr><th>工艺段</th><th>工位</th><th>序号</th><th>检查项目</th><th>特殊特性</th><th>结果</th></tr>
+      </thead>
+      <tbody id="checklistBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 最终结论 -->
+  <div class="section-title">最终结论</div>
+  <textarea id="f_conclusion" rows="3" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:13px;" placeholder="请输入最终结论"></textarea>
+
+  <p style="font-size:11px;color:#888;margin-top:8px;">备注：特殊特性标记【3】的检查项需特别关注，val类型需填写实测值。</p>
+
+  <button class="submit-btn" onclick="submitForm()">提交检查表</button>
+</div>
+</div>
+</div>
+
+<!-- Approval Tab -->
+<div id="tab-approval" class="page">
+<div class="container">
+<div class="card">
+  <h3 style="margin-bottom:12px;">待审批列表</h3>
+  <div id="approvalList"></div>
+</div>
+</div>
+</div>
+
+<!-- History Tab -->
+<div id="tab-history" class="page">
+<div class="container">
+<div class="card">
+  <h3 style="margin-bottom:12px;">历史记录</h3>
+  <div class="filter-bar">
+    <select id="historyFilter" onchange="loadHistory()">
+      <option value="">全部</option>
+      <option value="submitted">已提交</option>
+      <option value="engineering">工程审批中</option>
+      <option value="approved">已通过</option>
+      <option value="rejected">已驳回</option>
+    </select>
+  </div>
+  <div id="historyList"></div>
+</div>
+</div>
+</div>
+
+</div><!-- /mainApp -->
+
+<script>
+// 42项检查数据
+const checkItems = [
+  // 组装段 18项
+  {seg:'组装',station:'PCBA取料',no:1,name:'PCBA外观检查',sc:'',type:'ok'},
+  {seg:'组装',station:'PCBA取料',no:2,name:'PCBA型号确认',sc:'',type:'ok'},
+  {seg:'组装',station:'PCBA取料',no:3,name:'PCBA条码扫描',sc:'',type:'ok'},
+  {seg:'组装',station:'底壳',no:4,name:'底壳外观检查',sc:'',type:'ok'},
+  {seg:'组装',station:'底壳',no:5,name:'底壳型号确认',sc:'',type:'ok'},
+  {seg:'组装',station:'上盖',no:6,name:'上盖外观检查',sc:'',type:'ok'},
+  {seg:'组装',station:'上盖',no:7,name:'上盖型号确认',sc:'',type:'ok'},
+  {seg:'组装',station:'上盖',no:8,name:'上盖标签确认',sc:'',type:'ok'},
+  {seg:'组装',station:'涂散热硅脂',no:9,name:'硅脂重量',sc:'',type:'val'},
+  {seg:'组装',station:'涂散热硅脂',no:10,name:'硅脂位置确认',sc:'',type:'ok'},
+  {seg:'组装',station:'涂散热硅脂',no:11,name:'硅脂均匀度',sc:'',type:'ok'},
+  {seg:'组装',station:'上下壳',no:12,name:'上下壳组装到位',sc:'',type:'ok'},
+  {seg:'组装',station:'上下壳',no:13,name:'上下壳间隙检查',sc:'',type:'ok'},
+  {seg:'组装',station:'螺丝1',no:14,name:'螺丝扭力确认',sc:'',type:'ok'},
+  {seg:'组装',station:'螺丝1',no:15,name:'螺丝数量确认',sc:'',type:'ok'},
+  {seg:'组装',station:'螺丝2',no:16,name:'螺丝扭力确认',sc:'',type:'ok'},
+  {seg:'组装',station:'螺丝2',no:17,name:'螺丝数量确认',sc:'',type:'ok'},
+  {seg:'组装',station:'下料',no:18,name:'下料外观检查',sc:'',type:'ok'},
+  // 测试段 17项
+  {seg:'测试',station:'老化',no:19,name:'老化温度确认',sc:'',type:'ok'},
+  {seg:'测试',station:'老化',no:20,name:'老化时间确认',sc:'',type:'ok'},
+  {seg:'测试',station:'老化',no:21,name:'老化后外观',sc:'',type:'ok'},
+  {seg:'测试',station:'EOL',no:22,name:'EOL输入电压',sc:'',type:'val'},
+  {seg:'测试',station:'EOL',no:23,name:'EOL输出电压',sc:'',type:'ok'},
+  {seg:'测试',station:'EOL',no:24,name:'EOL输出电流',sc:'',type:'ok'},
+  {seg:'测试',station:'EOL',no:25,name:'EOL效率测试',sc:'',type:'ok'},
+  {seg:'测试',station:'EOL',no:26,name:'EOL纹波测试',sc:'【3】',type:'val'},
+  {seg:'测试',station:'EOL',no:27,name:'EOL待机功耗',sc:'【3】',type:'val'},
+  {seg:'测试',station:'EOL',no:28,name:'EOL满载功耗',sc:'【3】',type:'val'},
+  {seg:'测试',station:'EOL',no:29,name:'EOL过流保护',sc:'【3】',type:'val'},
+  {seg:'测试',station:'EOL',no:30,name:'EOL综合判定',sc:'',type:'ok'},
+  {seg:'测试',station:'GP12',no:31,name:'GP12外观检查',sc:'',type:'ok'},
+  {seg:'测试',station:'GP12',no:32,name:'GP12标签确认',sc:'',type:'ok'},
+  {seg:'测试',station:'GP12',no:33,name:'GP12功能测试',sc:'',type:'ok'},
+  {seg:'测试',station:'GP12',no:34,name:'GP12安规测试',sc:'',type:'ok'},
+  {seg:'测试',station:'GP12',no:35,name:'GP12综合判定',sc:'',type:'ok'},
+  // 包装段 7项
+  {seg:'包装',station:'PIN针',no:36,name:'PIN针外观检查',sc:'',type:'ok'},
+  {seg:'包装',station:'PIN针',no:37,name:'PIN针数量确认',sc:'',type:'ok'},
+  {seg:'包装',station:'PIN针',no:38,name:'PIN针型号确认',sc:'',type:'ok'},
+  {seg:'包装',station:'PIN针',no:39,name:'PIN针插入力',sc:'',type:'ok'},
+  {seg:'包装',station:'包装',no:40,name:'包装外观检查',sc:'',type:'ok'},
+  {seg:'包装',station:'包装',no:41,name:'包装标签确认',sc:'',type:'ok'},
+  {seg:'包装',station:'包装',no:42,name:'包装数量确认',sc:'',type:'ok'},
+];
+
+// 渲染检查表
+function renderChecklist(){
+  const tbody = document.getElementById('checklistBody');
+  let html = '';
+  let prevSeg='', prevStation='';
+  // 计算rowspan
+  const segCount={}, stationCount={};
+  checkItems.forEach(item=>{
+    segCount[item.seg]=(segCount[item.seg]||0)+1;
+    const key=item.seg+'|'+item.station;
+    stationCount[key]=(stationCount[key]||0)+1;
+  });
+  const segDone={}, stationDone={};
+  checkItems.forEach(item=>{
+    const stKey=item.seg+'|'+item.station;
+    let row='<tr>';
+    if(!segDone[item.seg]){
+      row+=`<td rowspan="${segCount[item.seg]}">${item.seg}</td>`;
+      segDone[item.seg]=true;
+    }
+    if(!stationDone[stKey]){
+      row+=`<td rowspan="${stationCount[stKey]}">${item.station}</td>`;
+      stationDone[stKey]=true;
+    }
+    row+=`<td>${item.no}</td><td class="left">${item.name}</td><td>${item.sc}</td>`;
+    if(item.type==='val'){
+      row+=`<td><input type="text" id="chk_${item.no}" placeholder="实测值"></td>`;
+    } else {
+      row+=`<td><select id="chk_${item.no}"><option value="OK">OK</option><option value="NG">NG</option></select></td>`;
+    }
+    row+='</tr>';
+    html+=row;
+  });
+  tbody.innerHTML=html;
+}
+
+// 收集表单
+function collectAllFormFields(){
+  const fields={};
+  // 基本字段
+  fields.f_type=document.querySelector('input[name=f_type]:checked').value;
+  ['f_model','f_date','f_order','f_qty','f_sn','f_line','f_pn','f_material_remark','f_person_remark','f_sop_remark',
+   'f_process_change','f_ecn','f_bom','f_equip_param','f_prev_order','f_last_sn','f_confirm_date','f_confirm_result','f_conclusion'
+  ].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) fields[id]=el.value;
+  });
+  // radio
+  ['f_material_change','f_person_change','f_sop_match'].forEach(name=>{
+    const r=document.querySelector(`input[name=${name}]:checked`);
+    if(r) fields[name]=r.value;
+  });
+  // 42项
+  checkItems.forEach(item=>{
+    const el=document.getElementById('chk_'+item.no);
+    if(el) fields['chk_'+item.no]=el.value;
+  });
+  return fields;
+}
+
+// 提交
+async function submitForm(){
+  const user=getUser();
+  if(!user){alert('请先登录');return;}
+  const btn=document.querySelector('.submit-btn');
+  btn.disabled=true; btn.textContent='提交中...';
+  try{
+    const fields=collectAllFormFields();
+    const [record]=await db.insert('forms',{created_by:user.id,status:'submitted',fields:fields});
+    await notifyFeishu('📋 新检查表已提交',`**提交人**: ${user.name}\n**机型**: ${fields.f_model}\n**SN**: ${fields.f_sn}\n**时间**: ${new Date().toLocaleString('zh-CN')}`);
+    alert('提交成功！');
+  }catch(e){
+    alert('提交失败：'+e.message);
+  }finally{
+    btn.disabled=false; btn.textContent='提交检查表';
+  }
+}
+
+// 登录
+async function doLogin(){
+  const badge=document.getElementById('badgeInput').value.trim();
+  if(!badge){alert('请输入工号');return;}
+  try{
+    const users=await db.query('users','badge_no=eq.'+badge);
+    if(!users||users.length===0){alert('工号不存在');return;}
+    setUser(users[0]);
+    showApp();
+  }catch(e){
+    alert('登录失败：'+e.message);
+  }
+}
+
+function doLogout(){
+  logout();
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('loginPage').style.display='flex';
+}
+
+function showApp(){
+  const user=getUser();
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+  document.getElementById('userName').textContent=user.name;
+  renderChecklist();
+  loadApprovals();
+}
+
+// Tab切换
+function switchTab(tab){
+  document.querySelectorAll('#mainApp .page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.querySelectorAll('.navbar .tabs button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  if(tab==='approval') loadApprovals();
+  if(tab==='history') loadHistory();
+}
+
+// 审批列表
+async function loadApprovals(){
+  const div=document.getElementById('approvalList');
+  div.innerHTML='加载中...';
+  try{
+    const user=getUser();
+    let items=[];
+    if(user.role==='engineer'){
+      items=await db.query('forms','status=eq.submitted&order=created_at.desc');
+    } else if(user.role==='qa'){
+      items=await db.query('forms','status=eq.engineering&order=created_at.desc');
+    } else {
+      const a=await db.query('forms','status=eq.submitted&order=created_at.desc');
+      const b=await db.query('forms','status=eq.engineering&order=created_at.desc');
+      items=[...(a||[]),...(b||[])];
+    }
+    if(!items||items.length===0){div.innerHTML='<p style="color:#888;">暂无待审批记录</p>';return;}
+    div.innerHTML=items.map(item=>`
+      <div class="list-item" onclick="showApprovalDetail('${item.id}')">
+        <div><strong>${item.fields?.f_model||'-'}</strong> | SN: ${item.fields?.f_sn||'-'}<br><small>${new Date(item.created_at).toLocaleString('zh-CN')}</small></div>
+        <span class="badge badge-${item.status}">${statusText(item.status)}</span>
+      </div>
+    `).join('');
+  }catch(e){div.innerHTML='加载失败：'+e.message;}
+}
+
+async function showApprovalDetail(id){
+  const items=await db.query('forms','id=eq.'+id);
+  if(!items||!items[0])return;
+  const item=items[0];
+  const user=getUser();
+  const f=item.fields||{};
+  // 统计OK/NG
+  let okCount=0,ngCount=0;
+  checkItems.forEach(ci=>{
+    const v=f['chk_'+ci.no];
+    if(v==='OK')okCount++;
+    else if(v==='NG')ngCount++;
+  });
+  const canApprove=(user.role==='engineer'&&item.status==='submitted')||(user.role==='qa'&&item.status==='engineering')||user.role==='admin';
+  const detailHtml=`
+    <div class="detail-panel" id="detail-${id}">
+      <p><strong>机型:</strong> ${f.f_model||'-'} | <strong>SN:</strong> ${f.f_sn||'-'} | <strong>工单:</strong> ${f.f_order||'-'}</p>
+      <p><strong>检查结果:</strong> OK: ${okCount} / NG: ${ngCount} / 总: 42</p>
+      <p><strong>结论:</strong> ${f.f_conclusion||'-'}</p>
+      ${canApprove?`<div class="actions">
+        <button class="btn-approve" onclick="doApprove('${id}','approve')">通过</button>
+        <button class="btn-reject" onclick="doApprove('${id}','reject')">驳回</button>
+      </div>`:'<p style="color:#888;margin-top:8px;">无审批权限</p>'}
+    </div>`;
+  // 插到对应item后
+  const existing=document.getElementById('detail-'+id);
+  if(existing){existing.remove();return;}
+  // 移除其他detail
+  document.querySelectorAll('.detail-panel').forEach(el=>el.remove());
+  event.target.closest('.list-item').insertAdjacentHTML('afterend',detailHtml);
+}
+
+async function doApprove(id, action){
+  const user=getUser();
+  let newStatus;
+  if(action==='reject') newStatus='rejected';
+  else if(user.role==='engineer') newStatus='engineering';
+  else newStatus='approved';
+  try{
+    await db.update('forms',id,{status:newStatus});
+    await db.insert('approvals',{form_id:id,user_id:user.id,action:action,new_status:newStatus});
+    await notifyFeishu('📋 检查表审批更新',`**审批人**: ${user.name}\n**操作**: ${action==='reject'?'驳回':'通过'}\n**新状态**: ${statusText(newStatus)}\n**时间**: ${new Date().toLocaleString('zh-CN')}`);
+    alert('操作成功');
+    loadApprovals();
+  }catch(e){alert('操作失败：'+e.message);}
+}
+
+// 历史记录
+async function loadHistory(){
+  const div=document.getElementById('historyList');
+  const filter=document.getElementById('historyFilter').value;
+  div.innerHTML='加载中...';
+  try{
+    let query='order=created_at.desc';
+    if(filter) query='status=eq.'+filter+'&'+query;
+    const items=await db.query('forms',query);
+    if(!items||items.length===0){div.innerHTML='<p style="color:#888;">暂无记录</p>';return;}
+    div.innerHTML=items.map(item=>`
+      <div class="list-item" onclick="showHistoryDetail('${item.id}')">
+        <div><strong>${item.fields?.f_model||'-'}</strong> | SN: ${item.fields?.f_sn||'-'}<br><small>${new Date(item.created_at).toLocaleString('zh-CN')}</small></div>
+        <span class="badge badge-${item.status}">${statusText(item.status)}</span>
+      </div>
+    `).join('');
+  }catch(e){div.innerHTML='加载失败：'+e.message;}
+}
+
+async function showHistoryDetail(id){
+  const items=await db.query('forms','id=eq.'+id);
+  if(!items||!items[0])return;
+  const item=items[0];
+  const f=item.fields||{};
+  let okCount=0,ngCount=0;
+  checkItems.forEach(ci=>{const v=f['chk_'+ci.no];if(v==='OK')okCount++;else if(v==='NG')ngCount++;});
+  const existing=document.getElementById('hist-detail-'+id);
+  if(existing){existing.remove();return;}
+  document.querySelectorAll('[id^=hist-detail]').forEach(el=>el.remove());
+  const html=`<div class="detail-panel" id="hist-detail-${id}">
+    <p><strong>机型:</strong> ${f.f_model||'-'} | <strong>SN:</strong> ${f.f_sn||'-'} | <strong>工单:</strong> ${f.f_order||'-'}</p>
+    <p><strong>日期:</strong> ${f.f_date||'-'} | <strong>生产线:</strong> ${f.f_line||'-'}</p>
+    <p><strong>检查结果:</strong> OK: ${okCount} / NG: ${ngCount} / 总: 42</p>
+    <p><strong>结论:</strong> ${f.f_conclusion||'-'}</p>
+  </div>`;
+  event.target.closest('.list-item').insertAdjacentHTML('afterend',html);
+}
+
+// 初始化
+(function init(){
+  const user=getUser();
+  if(user) showApp();
+  // 设置今天日期
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('f_date').value=today;
+})();
+</script>
+</body>
+</html>
