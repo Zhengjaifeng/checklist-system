@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>审批 - 首末件检查表系统</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+.check-item { padding: 6px 8px; border-radius: 4px; font-size: 12px; text-align: center; border: 1px solid var(--border); }
+.check-ok { background: #e6f7e6; color: #28a745; border-color: #b7e4b7; }
+.check-ng { background: #fde8e8; color: #dc3545; border-color: #f5c6cb; font-weight: bold; }
+.check-na { background: #f8f9fa; color: #999; }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.info-item { font-size: 13px; }
+.info-item .label { color: var(--text-light); font-size: 12px; }
+.info-item .value { font-weight: bold; margin-top: 2px; }
+.approval-item { padding: 12px; border-left: 3px solid var(--primary); margin-bottom: 8px; background: #f8f9fa; border-radius: 0 4px 4px 0; }
+.approval-item.approve { border-color: var(--success); }
+.approval-item.reject { border-color: var(--danger); }
+.section-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+@media (max-width: 600px) {
+  .check-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+  .info-grid { grid-template-columns: 1fr; }
+  .action-bar { flex-direction: column; }
+  .action-bar .btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<div class="container" id="app"></div>
+<script src="/js/app.js"></script>
+<script>
+const user = requireLogin();
+if (user) {
+  document.getElementById('nav').innerHTML = renderNav('review');
+  const params = new URLSearchParams(location.search);
+  const formId = params.get('id');
+  if (formId) loadDetail(formId); else loadList();
+}
+
+async function loadList() {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="card"><p>加载中...</p></div>';
+  try {
+    const list = await api(`/api/approval/pending?role=${user.role}`);
+    if (!list.length) {
+      app.innerHTML = '<div class="card"><p style="text-align:center;color:var(--text-light);padding:40px 0;">暂无待审批记录</p></div>';
+      return;
+    }
+    app.innerHTML = `<div class="card">
+      <h3 style="margin-bottom:12px;">待审批列表</h3>
+      <table class="data-table">
+        <thead><tr><th>ID</th><th>提交人</th><th>机型</th><th>SN</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>${list.map(f => `<tr>
+          <td>${f.id}</td>
+          <td>${f.creator_name || ''}${f.creator_badge ? '(' + f.creator_badge + ')' : ''}</td>
+          <td>${(f.fields && f.fields.model) || '-'}</td>
+          <td>${(f.fields && f.fields.sn) || '-'}</td>
+          <td>${statusBadge(f.status)}</td>
+          <td>${f.created_at || ''}</td>
+          <td><a href="/review.html?id=${f.id}" class="btn btn-primary" style="padding:4px 12px;font-size:12px;">审批</a></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  } catch (e) {
+    app.innerHTML = `<div class="card"><p style="color:var(--danger);">加载失败: ${e.message}</p></div>`;
+  }
+}
+
+async function loadDetail(id) {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="card"><p>加载中...</p></div>';
+  try {
+    const form = await api(`/api/forms/${id}`);
+    const f = form.fields || {};
+    const canApprove =
+      user.role === 'admin' ||
+      (user.role === 'engineer' && form.status === 'submitted') ||
+      (user.role === 'qa' && form.status === 'engineering');
+
+    // Build check items summary
+    const checkNames = [];
+    for (let i = 1; i <= 42; i++) checkNames.push(i);
+
+    function renderCheckGrid(prefix, label) {
+      return `<div style="margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:bold;margin-bottom:6px;">${label}</div>
+        <div class="check-grid">${checkNames.map(i => {
+          const key = `${prefix}_${i}`;
+          const val = f[key];
+          const cls = val === 'OK' ? 'check-ok' : val === 'NG' ? 'check-ng' : 'check-na';
+          return `<div class="check-item ${cls}">#${i}: ${val || '-'}</div>`;
+        }).join('')}</div>
+      </div>`;
+    }
+
+    // Count NG
+    let prodNG = 0, qaNG = 0;
+    for (let i = 1; i <= 42; i++) {
+      if (f[`pokg_${i}`] === 'NG') prodNG++;
+      if (f[`qokg_${i}`] === 'NG') qaNG++;
+    }
+
+    app.innerHTML = `
+      <div style="margin-bottom:12px;">
+        <a href="/review.html" style="font-size:13px;">&larr; 返回列表</a>
+      </div>
+      <div class="card">
+        <div class="section-title">表单基本信息</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="label">表单ID</div><div class="value">${form.id}</div></div>
+          <div class="info-item"><div class="label">提交人</div><div class="value">${form.creator_name || ''}${form.creator_badge ? '(' + form.creator_badge + ')' : ''}</div></div>
+          <div class="info-item"><div class="label">创建时间</div><div class="value">${form.created_at || ''}</div></div>
+          <div class="info-item"><div class="label">状态</div><div class="value">${statusBadge(form.status)}</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">关键字段</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="label">机型</div><div class="value">${f.model || '-'}</div></div>
+          <div class="info-item"><div class="label">SN</div><div class="value">${f.sn || '-'}</div></div>
+          <div class="info-item"><div class="label">工单</div><div class="value">${f.workOrder || '-'}</div></div>
+          <div class="info-item"><div class="label">生产日期</div><div class="value">${f.prodDate || '-'}</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">检查结果摘要
+          <span style="font-size:12px;font-weight:normal;margin-left:12px;">
+            生产NG: <span style="color:var(--danger);font-weight:bold;">${prodNG}</span>
+            &nbsp; 品质NG: <span style="color:var(--danger);font-weight:bold;">${qaNG}</span>
+          </span>
+        </div>
+        ${renderCheckGrid('pokg', '生产检查 (pokg)')}
+        ${renderCheckGrid('qokg', '品质检查 (qokg)')}
+      </div>
+      <div class="card">
+        <div class="section-title">审批历史</div>
+        ${(form.approvals && form.approvals.length)
+          ? form.approvals.map(a => `<div class="approval-item ${a.action}">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <strong>${a.user_name || ''}</strong>
+                <span style="font-size:12px;color:var(--text-light);">${a.created_at || ''}</span>
+              </div>
+              <div>${a.action === 'approve' ? '<span style="color:var(--success);">通过</span>' : '<span style="color:var(--danger);">驳回</span>'}</div>
+              ${a.comment ? `<div style="margin-top:4px;font-size:13px;color:var(--text-light);">${a.comment}</div>` : ''}
+            </div>`).join('')
+          : '<p style="color:var(--text-light);">暂无审批记录</p>'}
+      </div>
+      ${canApprove ? `<div class="card">
+        <div class="section-title">审批操作</div>
+        <div class="form-group">
+          <label>审批意见</label>
+          <textarea id="comment" rows="3" placeholder="请输入审批意见（可选）"></textarea>
+        </div>
+        <div class="action-bar" style="display:flex;gap:10px;">
+          <button class="btn btn-success" onclick="doApprove(${form.id}, 'approve')">通过</button>
+          <button class="btn btn-danger" onclick="doApprove(${form.id}, 'reject')">驳回</button>
+        </div>
+      </div>` : ''}
+    `;
+  } catch (e) {
+    app.innerHTML = `<div class="card"><p style="color:var(--danger);">加载失败: ${e.message}</p></div>`;
+  }
+}
+
+async function doApprove(formId, action) {
+  const comment = document.getElementById('comment').value.trim();
+  const label = action === 'approve' ? '通过' : '驳回';
+  if (!confirm(`确认${label}此表单？`)) return;
+  try {
+    await api(`/api/approval/${formId}`, {
+      method: 'POST',
+      body: { user_id: user.id, action, comment }
+    });
+    alert(`已${label}`);
+    loadDetail(formId);
+  } catch (e) {
+    alert('操作失败: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>

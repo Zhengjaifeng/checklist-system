@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新建检查表 - 首末件检查表系统</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .form-header { text-align: center; margin-bottom: 4px; }
+  .form-header h2 { font-size: 18px; margin: 6px 0; }
+  .doc-info { text-align: right; font-size: 12px; color: #555; line-height: 1.8; margin-bottom: 4px; }
+
+  .check-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .check-table th, .check-table td { border: 1px solid #333; padding: 4px 6px; vertical-align: middle; }
+  .check-table th { background: #d9e2f3; text-align: center; font-weight: bold; }
+
+  .section-header { background: #b4c6e7; font-weight: bold; text-align: center; writing-mode: vertical-lr; letter-spacing: 4px; }
+  .sub-section { background: #dce6f1; text-align: center; font-weight: bold; }
+
+  .check-table input[type="text"],
+  .check-table input[type="date"],
+  .check-table input[type="number"] { width: 100%; border: none; border-bottom: 1px solid #999; background: transparent; font-size: 12px; padding: 2px; box-sizing: border-box; }
+  .check-table select { border: 1px solid #999; font-size: 11px; padding: 1px; }
+  .check-table textarea { width: 100%; border: 1px solid #999; font-size: 12px; padding: 2px; resize: vertical; }
+
+  .radio-group { display: inline-flex; gap: 10px; align-items: center; }
+  .radio-group label { font-weight: normal; font-size: 12px; cursor: pointer; }
+
+  .info-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 0; }
+  .info-table th, .info-table td { border: 1px solid #333; padding: 5px 8px; }
+  .info-table th { background: #d9e2f3; text-align: center; font-weight: bold; min-width: 60px; }
+  .info-table .section-label { background: #b4c6e7; writing-mode: vertical-lr; text-align: center; letter-spacing: 4px; font-weight: bold; width: 30px; }
+  .info-table input[type="text"], .info-table input[type="date"] { width: 100%; border: none; border-bottom: 1px solid #999; background: transparent; font-size: 12px; padding: 2px; box-sizing: border-box; }
+
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 16px; }
+  .btn-bar { text-align: center; margin: 20px 0; }
+  .btn-bar .btn { font-size: 15px; padding: 10px 32px; }
+
+  .note-box { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 4px; padding: 10px 14px; font-size: 12px; color: #8a6d3b; margin: 12px 0; }
+
+  .conclusion-area { margin: 12px 0; }
+  .conclusion-area textarea { width: 100%; min-height: 60px; border: 1px solid #999; font-size: 13px; padding: 6px; }
+  .conclusion-area label { font-weight: bold; display: block; margin-bottom: 4px; }
+
+  @media (max-width: 768px) {
+    .check-table { font-size: 11px; min-width: 900px; }
+    .info-table { font-size: 11px; min-width: 700px; }
+  }
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<div class="container">
+  <div class="card">
+
+    <!-- 文件编号区 -->
+    <div class="doc-info">
+      文件编号：P09-S10-F01-020<br>
+      版次：A0
+    </div>
+    <div class="form-header">
+      <h2>首末件检查表（CX1E_16AUD）</h2>
+      <div style="font-size:12px;color:#666;">模板编号：P09-S10-F01 &nbsp; 版本：V1.0</div>
+    </div>
+
+    <!-- 首/末件选择 -->
+    <div style="margin:12px 0;font-size:13px;">
+      <b>类型：</b>
+      <div class="radio-group">
+        <label><input type="radio" name="type" value="首件" checked> 首件</label>
+        <label><input type="radio" name="type" value="末件"> 末件</label>
+      </div>
+    </div>
+
+    <!-- 生产填写区 -->
+    <div class="table-wrap">
+    <table class="info-table">
+      <tr>
+        <td class="section-label" rowspan="5">生产填写</td>
+        <th>机型</th><td><input type="text" id="model"></td>
+        <th>生产日期</th><td><input type="date" id="prodDate"></td>
+        <th>工单</th><td><input type="text" id="workOrder"></td>
+        <th>批量</th><td><input type="text" id="batchQty"></td>
+        <td rowspan="5" style="text-align:center;min-width:200px;">
+          <div style="margin-bottom:8px;"><b>生产签名</b><br><input type="text" id="prodSign1" style="width:90%;border:none;border-bottom:1px solid #999;margin-top:4px;"></div>
+          <div style="margin-bottom:8px;"><b>工程签名</b><br><input type="text" id="engSign1" style="width:90%;border:none;border-bottom:1px solid #999;margin-top:4px;"></div>
+          <div><b>质量签名</b><br><input type="text" id="qaSign1" style="width:90%;border:none;border-bottom:1px solid #999;margin-top:4px;"></div>
+        </td>
+      </tr>
+      <tr>
+        <th>SN</th><td><input type="text" id="sn"></td>
+        <th>生产线</th><td><input type="text" id="prodLine"></td>
+        <th>产品料号</th><td colspan="2"><input type="text" id="partNo"></td>
+      </tr>
+      <tr>
+        <th>有无物料变更/替换</th>
+        <td>
+          <div class="radio-group">
+            <label><input type="radio" name="materialChange" value="有"> 有</label>
+            <label><input type="radio" name="materialChange" value="无" checked> 无</label>
+          </div>
+        </td>
+        <th>备注变更的物料</th><td colspan="4"><input type="text" id="materialChangeNote"></td>
+      </tr>
+      <tr>
+        <th>有无人员变更</th>
+        <td>
+          <div class="radio-group">
+            <label><input type="radio" name="staffChange" value="有"> 有</label>
+            <label><input type="radio" name="staffChange" value="无" checked> 无</label>
+          </div>
+        </td>
+        <th>备注变更的工位</th><td colspan="4"><input type="text" id="staffChangeNote"></td>
+      </tr>
+      <tr>
+        <th>各工位所发物料是否跟SOP一致</th>
+        <td>
+          <div class="radio-group">
+            <label><input type="radio" name="sopMatch" value="是" checked> 是</label>
+            <label><input type="radio" name="sopMatch" value="否"> 否</label>
+          </div>
+        </td>
+        <th>备注不一致的工位</th><td colspan="4"><input type="text" id="sopMatchNote"></td>
+      </tr>
+    </table>
+    </div>
+
+    <!-- 工程填写区 -->
+    <div class="table-wrap">
+    <table class="info-table">
+      <tr>
+        <td class="section-label" rowspan="4">工程填写</td>
+        <th>有无工艺变更</th>
+        <td>
+          <div class="radio-group">
+            <label><input type="radio" name="processChange" value="有"> 有</label>
+            <label><input type="radio" name="processChange" value="无" checked> 无</label>
+          </div>
+        </td>
+        <th>备注变更的工艺</th><td colspan="3"><input type="text" id="processChangeNote"></td>
+        <td rowspan="4" style="text-align:center;min-width:200px;">
+          <div style="margin-bottom:8px;"><b>生产签名</b><br><input type="text" id="prodSign2" style="width:90%;border:none;border-bottom:1px solid #999;margin-top:4px;"></div>
+          <div style="margin-bottom:8px;"><b>工程签名</b><br><input type="text" id="engSign2" style="width:90%;border:none;border-bottom:1px solid #999;margin-top:4px;"></div>
+          <div><b>质量签名</b><br><input type="text" id="qaSign2" style="width:90%;border:none;border-bottom:1px solid #999;margin-top:4px;"></div>
+        </td>
+      </tr>
+      <tr>
+        <th>有无联络、EN/ECN需要执行</th>
+        <td>
+          <div class="radio-group">
+            <label><input type="radio" name="ecnExec" value="有"> 有</label>
+            <label><input type="radio" name="ecnExec" value="无" checked> 无</label>
+          </div>
+        </td>
+        <th>备注执行的文件</th><td colspan="3"><input type="text" id="ecnExecNote"></td>
+      </tr>
+      <tr>
+        <th>SOP上面物料是否跟BOM一致</th>
+        <td>
+          <div class="radio-group">
+            <label><input type="radio" name="bomMatch" value="是" checked> 是</label>
+            <label><input type="radio" name="bomMatch" value="否"> 否</label>
+          </div>
+        </td>
+        <th>备注不一致的物料</th><td colspan="3"><input type="text" id="bomMatchNote"></td>
+      </tr>
+      <tr>
+        <th>设备/仪器参数是否满足要求</th>
+        <td>
+          <div class="radio-group">
+            <label><input type="radio" name="equipOk" value="是" checked> 是</label>
+            <label><input type="radio" name="equipOk" value="否"> 否</label>
+          </div>
+        </td>
+        <th>备注不一致的仪器</th><td colspan="3"><input type="text" id="equipNote"></td>
+      </tr>
+    </table>
+    </div>
+
+    <!-- 首末件确认 -->
+    <div class="table-wrap">
+    <table class="info-table">
+      <tr>
+        <th>上一工单号</th><td><input type="text" id="prevWorkOrder"></td>
+        <th>上一工单末件SN</th><td><input type="text" id="prevSN"></td>
+        <th>上一工单生产日期</th><td><input type="date" id="prevDate"></td>
+        <th>确认结果</th>
+        <td>
+          <div class="radio-group">
+            <label><input type="radio" name="confirmResult" value="OK" checked> OK</label>
+            <label><input type="radio" name="confirmResult" value="NG"> NG</label>
+          </div>
+        </td>
+      </tr>
+    </table>
+    </div>
+
+    <!-- 主检查表 -->
+    <div class="table-wrap">
+    <table class="check-table" id="checkTable">
+      <thead>
+        <tr>
+          <th style="min-width:60px;">工艺段</th>
+          <th style="min-width:80px;">工位</th>
+          <th style="width:36px;">序号</th>
+          <th style="min-width:180px;">确认项目(SOP)</th>
+          <th style="min-width:120px;">规格/标准</th>
+          <th style="width:50px;">特殊特性</th>
+          <th style="width:70px;">生产-数值</th>
+          <th style="width:60px;">生产-OK/NG</th>
+          <th style="width:70px;">品质-数值</th>
+          <th style="width:60px;">品质-OK/NG</th>
+          <th style="min-width:80px;">备注</th>
+        </tr>
+      </thead>
+      <tbody id="checkBody"></tbody>
+    </table>
+    </div>
+
+    <!-- 最终结论 -->
+    <div class="conclusion-area">
+      <label>最终结论：</label>
+      <textarea id="conclusion" placeholder="请填写最终结论..."></textarea>
+      <div style="margin-top:8px;">
+        <label style="display:inline;margin-right:8px;">确认人：</label>
+        <input type="text" id="confirmer" style="width:200px;border:1px solid #999;padding:4px 6px;font-size:13px;">
+      </div>
+    </div>
+
+    <!-- 备注 -->
+    <div class="note-box">
+      <b>备注：</b>点检NG后现场PE工程师及时给出原因对策，如原因与人员相关则反馈给生产进行整改，如与设备相关则反馈给设备进行维护调整，如与物料相关则反馈给SQE进行供方改进。所有问题需在当班内给出改善方案并反馈品质确认。
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="btn-bar">
+      <button class="btn btn-primary" onclick="submitForm()">提交检查表</button>
+      <button class="btn btn-outline" onclick="saveDraft()">保存草稿</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+const user = requireLogin();
+if (user) {
+  document.getElementById('nav').innerHTML = renderNav('form');
+}
+
+// 42项检查项数据
+const checkItems = [
+  // 组装段
+  { section:'组装段', station:'PCBA取料', no:1,  item:'PCBA来料外观良好，无连锡等不良', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'PCBA取料', no:2,  item:'PCBA料号正确(002.011.0001650)', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'PCBA取料', no:3,  item:'PCBA平行放入治具', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'底壳上料', no:4,  item:'底壳料号正确(004.068.0054039)', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'底壳上料', no:5,  item:'底壳来料外观无变形', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'上盖上料', no:6,  item:'上盖料号正确(004.069.0070906)', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'上盖上料', no:7,  item:'条码粘贴平整', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'上盖上料', no:8,  item:'上盖来料外观', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'涂散热硅脂', no:9,  item:'散热胶用量', spec:'3.8±0.5g', sc:'//', inputType:'val' },
+  { section:'组装段', station:'涂散热硅脂', no:10, item:'涂覆状态', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'涂散热硅脂', no:11, item:'胶水型号(HiC-Pad6000LV)', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'上下壳组装', no:12, item:'主板装配对齐', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'上下壳组装', no:13, item:'上盖装配对齐', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'锁付螺丝1', no:14, item:'螺丝规格T10 ST2.6×8mm', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'锁付螺丝1', no:15, item:'5颗螺丝紧固', spec:'目视/手感', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'锁付螺丝2', no:16, item:'螺丝规格T10 ST2.6×8mm', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'锁付螺丝2', no:17, item:'5颗螺丝紧固', spec:'目视/手感', sc:'//', inputType:'okng' },
+  { section:'组装段', station:'成品下料', no:18, item:'放品放于轨道', spec:'目视', sc:'//', inputType:'okng' },
+  // 测试段
+  { section:'测试段', station:'老化测试', no:19, item:'过温检测', spec:'产品自诊断过温', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'老化测试', no:20, item:'接插件状态', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'老化测试', no:21, item:'老化结果', spec:'设备提示OK', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'震动EOL测试', no:22, item:'软件版本', spec:'核对', sc:'//', inputType:'val' },
+  { section:'测试段', station:'震动EOL测试', no:23, item:'硬件版本', spec:'核对', sc:'//', inputType:'val' },
+  { section:'测试段', station:'震动EOL测试', no:24, item:'接插件外观', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'震动EOL测试', no:25, item:'全声道输出', spec:'1000Hz 2.0±0.2Vrms', sc:'//', inputType:'val' },
+  { section:'测试段', station:'震动EOL测试', no:26, item:'暗电流', spec:'<0.1mA', sc:'【3】', inputType:'val' },
+  { section:'测试段', station:'震动EOL测试', no:27, item:'残留杂音', spec:'<100uVrms', sc:'【3】', inputType:'val' },
+  { section:'测试段', station:'震动EOL测试', no:28, item:'失真率', spec:'＜0.1%', sc:'【3】', inputType:'val' },
+  { section:'测试段', station:'震动EOL测试', no:29, item:'频率响应', spec:'-1.5～+0.5dB', sc:'【3】', inputType:'val' },
+  { section:'测试段', station:'震动EOL测试', no:30, item:'测试结果', spec:'设备提示OK', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'GP12', no:31, item:'各声道输出', spec:'目视/听感', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'GP12', no:32, item:'开关机POPO音', spec:'目视/听感', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'GP12', no:33, item:'MOUTE ON/OFF POPO音', spec:'目视/听感', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'GP12', no:34, item:'EPC标识', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'测试段', station:'GP12', no:35, item:'测试结果', spec:'设备提示OK', sc:'//', inputType:'okng' },
+  // 包装段
+  { section:'包装段', station:'PIN针检测&目检', no:36, item:'PIN脚检查', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'包装段', station:'PIN针检测&目检', no:37, item:'PIN针测试', spec:'设备提示OK', sc:'//', inputType:'okng' },
+  { section:'包装段', station:'PIN针检测&目检', no:38, item:'打印内容', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'包装段', station:'PIN针检测&目检', no:39, item:'外壳检查', spec:'目视', sc:'//', inputType:'okng' },
+  { section:'包装段', station:'包装', no:40, item:'外箱EPC标识', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'包装段', station:'包装', no:41, item:'客户标签', spec:'核对', sc:'//', inputType:'okng' },
+  { section:'包装段', station:'包装', no:42, item:'摆放方式', spec:'目视/SOP', sc:'//', inputType:'okng' },
+];
+
+// 计算 rowspan
+function calcRowspans(items, key) {
+  const spans = [];
+  let i = 0;
+  while (i < items.length) {
+    let j = i + 1;
+    while (j < items.length && items[j][key] === items[i][key]) j++;
+    spans.push({ start: i, span: j - i });
+    i = j;
+  }
+  return spans;
+}
+
+function renderCheckTable() {
+  const tbody = document.getElementById('checkBody');
+  const sectionSpans = calcRowspans(checkItems, 'section');
+  const sectionStarts = new Set(sectionSpans.map(s => s.start));
+  const sectionMap = {};
+  sectionSpans.forEach(s => { sectionMap[s.start] = s.span; });
+
+  const stationSpans = calcRowspans(checkItems, 'station');
+  const stationStarts = new Set(stationSpans.map(s => s.start));
+  const stationMap = {};
+  stationSpans.forEach(s => { stationMap[s.start] = s.span; });
+
+  let html = '';
+  checkItems.forEach((item, idx) => {
+    html += '<tr>';
+    if (sectionStarts.has(idx)) {
+      html += `<td class="section-header" rowspan="${sectionMap[idx]}">${item.section}</td>`;
+    }
+    if (stationStarts.has(idx)) {
+      html += `<td class="sub-section" rowspan="${stationMap[idx]}">${item.station}</td>`;
+    }
+    const valCell = item.inputType === 'val'
+      ? `<input type="text" name="pval_${item.no}" id="pval_${item.no}" style="width:60px;">`
+      : '/';
+    const qvalCell = item.inputType === 'val'
+      ? `<input type="text" name="qval_${item.no}" id="qval_${item.no}" style="width:60px;">`
+      : '/';
+    html += `
+      <td style="text-align:center;">${item.no}</td>
+      <td>${item.item}</td>
+      <td style="text-align:center;">${item.spec}</td>
+      <td style="text-align:center;">${item.sc}</td>
+      <td style="text-align:center;">${valCell}</td>
+      <td style="text-align:center;">
+        <select name="pokg_${item.no}" id="pokg_${item.no}"><option value="-">-</option><option value="OK">OK</option><option value="NG">NG</option></select>
+      </td>
+      <td style="text-align:center;">${qvalCell}</td>
+      <td style="text-align:center;">
+        <select name="qokg_${item.no}" id="qokg_${item.no}"><option value="-">-</option><option value="OK">OK</option><option value="NG">NG</option></select>
+      </td>
+      <td><input type="text" name="remark_${item.no}" id="remark_${item.no}" style="width:70px;"></td>
+    `;
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+renderCheckTable();
+
+// 收集所有字段
+function collectFields() {
+  const fields = {};
+  // radio fields
+  const radios = ['type','materialChange','staffChange','sopMatch','processChange','ecnExec','bomMatch','equipOk','confirmResult'];
+  radios.forEach(name => {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    if (el) fields[name] = el.value;
+  });
+  // text/date fields
+  const textIds = [
+    'model','prodDate','workOrder','batchQty','sn','prodLine','partNo',
+    'materialChangeNote','staffChangeNote','sopMatchNote',
+    'processChangeNote','ecnExecNote','bomMatchNote','equipNote',
+    'prodSign1','engSign1','qaSign1','prodSign2','engSign2','qaSign2',
+    'prevWorkOrder','prevSN','prevDate',
+    'conclusion','confirmer'
+  ];
+  textIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) fields[id] = el.value;
+  });
+  // check items
+  checkItems.forEach(item => {
+    const n = item.no;
+    ['pval_','pokg_','qval_','qokg_','remark_'].forEach(prefix => {
+      const el = document.getElementById(prefix + n);
+      if (el) fields[prefix + n] = el.value;
+    });
+  });
+  return fields;
+}
+
+// 还原字段
+function restoreFields(fields) {
+  if (!fields) return;
+  Object.keys(fields).forEach(key => {
+    // radio
+    const radio = document.querySelector(`input[name="${key}"][value="${fields[key]}"]`);
+    if (radio) { radio.checked = true; return; }
+    // other
+    const el = document.getElementById(key);
+    if (el) el.value = fields[key];
+  });
+}
+
+async function submitForm() {
+  if (!user) return;
+  const fields = collectFields();
+  try {
+    const res = await api('/api/forms', { method: 'POST', body: { created_by: user.id, fields } });
+    alert('提交成功！');
+    localStorage.removeItem('formDraft');
+    location.href = '/index.html';
+  } catch (e) {
+    alert('提交失败：' + e.message);
+  }
+}
+
+function saveDraft() {
+  const fields = collectFields();
+  localStorage.setItem('formDraft', JSON.stringify(fields));
+  alert('草稿已保存！');
+}
+
+// 页面加载时尝试恢复草稿
+(function() {
+  const draft = localStorage.getItem('formDraft');
+  if (draft) {
+    try { restoreFields(JSON.parse(draft)); } catch(e) {}
+  }
+})();
+</script>
+</body>
+</html>

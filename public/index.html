@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首页 - 首末件检查表系统</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="nav"></div>
+<div class="container">
+  <div class="stats" id="stats"></div>
+  <div class="card">
+    <h3 style="margin-bottom:12px;">最近记录</h3>
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>提交人</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+      <tbody id="recent"></tbody>
+    </table>
+  </div>
+</div>
+<script src="/js/app.js"></script>
+<script>
+const user = requireLogin();
+if (user) {
+  document.getElementById('nav').innerHTML = renderNav('home');
+  load();
+}
+async function load() {
+  const forms = await api('/api/forms');
+  const mine = forms.filter(f => f.created_by === user.id);
+  const pending = forms.filter(f =>
+    (user.role === 'engineer' && f.status === 'submitted') ||
+    (user.role === 'qa' && f.status === 'engineering'));
+  const approved = forms.filter(f => f.status === 'approved');
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="num">${forms.length}</div><div class="label">总记录</div></div>
+    <div class="stat-card"><div class="num">${mine.length}</div><div class="label">我提交的</div></div>
+    <div class="stat-card"><div class="num" style="color:#dc3545">${pending.length}</div><div class="label">待我处理</div></div>
+    <div class="stat-card"><div class="num" style="color:#28a745">${approved.length}</div><div class="label">已通过</div></div>
+  `;
+
+  const tbody = document.getElementById('recent');
+  tbody.innerHTML = forms.slice(0, 20).map(f => `<tr>
+    <td>${f.id}</td>
+    <td>${f.creator_name}(${f.creator_badge})</td>
+    <td>${statusBadge(f.status)}</td>
+    <td>${f.created_at}</td>
+    <td>
+      <a href="/review.html?id=${f.id}" class="btn btn-outline" style="padding:4px 10px;font-size:12px;">查看</a>
+    </td>
+  </tr>`).join('');
+}
+</script>
+</body>
+</html>
