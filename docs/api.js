@@ -19,7 +19,7 @@ const db = {
   }
 };
 
-async function notifyFeishu(title, content) {
+async function notifyFeishu(title, content, color) {
   try {
     await fetch(FEISHU_WEBHOOK, {
       method: 'POST',
@@ -27,7 +27,7 @@ async function notifyFeishu(title, content) {
       body: JSON.stringify({
         msg_type: 'interactive',
         card: {
-          header: { title: { tag: 'plain_text', content: title }, template: 'blue' },
+          header: { title: { tag: 'plain_text', content: title }, template: color || 'blue' },
           elements: [{ tag: 'div', text: { tag: 'lark_md', content } }]
         }
       })

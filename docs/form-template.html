@@ -549,8 +549,11 @@ async function submitToCloud() {
     await fetch(FEISHU_WEBHOOK, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ msg_type: 'interactive', card: {
-        header: { title: { tag: 'plain_text', content: '📋 新检查表已提交' }, template: 'blue' },
-        elements: [{ tag: 'div', text: { tag: 'lark_md', content: `**提交人**: ${user.name}\n**机型**: ${fields.model||'-'}\n**SN**: ${fields.sn||'-'}\n**工单**: ${fields.workOrder||'-'}\n**时间**: ${new Date().toLocaleString('zh-CN')}` } }]
+        header: { title: { tag: 'plain_text', content: '📋 新检查表已提交' }, template: 'orange' },
+        elements: [
+          { tag: 'div', text: { tag: 'lark_md', content: `**提交人**: ${user.name}\n**机型**: ${fields.model||'-'}\n**SN**: ${fields.sn||'-'}\n**工单**: ${fields.workOrder||'-'}\n**时间**: ${new Date().toLocaleString('zh-CN')}` } },
+          { tag: 'div', text: { tag: 'lark_md', content: `\n**📌 当前状态：待工程审批**` } }
+        ]
       }})
     });
 
