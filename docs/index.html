@@ -490,10 +490,17 @@ async function loadApprovals(){
       const f=item.fields||{};
       const model=f.f_model||f.model||'-';
       const sn=f.f_sn||f.sn||'-';
+      const canAct=(user.role==='engineer'&&item.status==='submitted')||(user.role==='qa'&&item.status==='engineering')||user.role==='admin';
       return `
-      <div class="list-item" id="item-${item.id}" onclick="showApprovalDetail('${item.id}',this)">
-        <div><strong>${model}</strong> | SN: ${sn}<br><small>${new Date(item.created_at).toLocaleString('zh-CN')}</small></div>
+      <div class="list-item" id="item-${item.id}" style="flex-wrap:wrap;">
+        <div onclick="showApprovalDetail('${item.id}',document.getElementById('item-${item.id}'))" style="flex:1;cursor:pointer;">
+          <strong>${model}</strong> | SN: ${sn}<br><small>${new Date(item.created_at).toLocaleString('zh-CN')}</small>
+        </div>
         <span class="badge badge-${item.status}">${statusText(item.status)}</span>
+        ${canAct?`<div style="display:flex;gap:6px;margin-left:8px;">
+          <button onclick="event.stopPropagation();doApprove('${item.id}','approve')" style="background:#28a745;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">✓ 通过</button>
+          <button onclick="event.stopPropagation();doApprove('${item.id}','reject')" style="background:#dc3545;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">✗ 驳回</button>
+        </div>`:''}
       </div>`;
     }).join('');
   }catch(e){div.innerHTML='加载失败：'+e.message;}
