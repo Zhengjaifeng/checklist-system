@@ -48,6 +48,23 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f5f5; padding-top
 .checklist-table { width:100%; border-collapse:collapse; font-size:12px; min-width:700px; }
 .checklist-table th, .checklist-table td { border:1px solid #333; padding:4px 6px; text-align:center; }
 .checklist-table th { background:#d9e2f3; font-weight:bold; }
+
+/* Progress bar */
+.progress-bar { display:flex; align-items:center; gap:0; margin:10px 0; }
+.progress-bar .step { padding:4px 12px; font-size:11px; background:#e0e0e0; border-radius:12px; white-space:nowrap; }
+.progress-bar .step.done { background:#28a745; color:#fff; }
+.progress-bar .step.rejected { background:#dc3545; color:#fff; }
+.progress-bar .step-line { width:20px; height:2px; background:#ccc; }
+.progress-bar .step-line.done { background:#28a745; }
+
+/* Timeline */
+.timeline { margin:12px 0; padding:8px 0; border-top:1px solid #eee; }
+.timeline-item { display:flex; align-items:center; gap:8px; padding:6px 0; font-size:13px; position:relative; padding-left:16px; border-left:2px solid #1a73e8; margin-left:6px; }
+.timeline-item.reject { border-left-color:#dc3545; }
+.timeline-dot { width:10px; height:10px; border-radius:50%; background:#1a73e8; position:absolute; left:-6px; }
+.timeline-item.reject .timeline-dot { background:#dc3545; }
+.timeline-item small { color:#888; margin-left:auto; }
+.timeline-comment { font-size:12px; color:#555; margin-top:2px; padding-left:16px; }
 .checklist-table td.left { text-align:left; }
 .checklist-table input[type=text] { width:60px; padding:2px; font-size:12px; border:1px solid #ccc; border-radius:2px; }
 .checklist-table select { font-size:12px; padding:1px; }
@@ -425,43 +442,83 @@ async function showApprovalDetail(id){
   const item=items[0];
   const user=getUser();
   const f=item.fields||{};
-  // 统计OK/NG
-  let okCount=0,ngCount=0;
+  const approvals=await db.query('approvals','form_id=eq.'+id+'&order=created_at.asc');
+
+  let okCount=0,ngCount=0,ngItems=[];
   checkItems.forEach(ci=>{
     const v=f['chk_'+ci.no];
     if(v==='OK')okCount++;
-    else if(v==='NG')ngCount++;
+    else if(v==='NG'){ngCount++;ngItems.push(ci);}
   });
   const canApprove=(user.role==='engineer'&&item.status==='submitted')||(user.role==='qa'&&item.status==='engineering')||user.role==='admin';
+
+  // 进度条
+  const steps=[{key:'submitted',label:'已提交'},{key:'engineering',label:'工程确认'},{key:'approved',label:'质量通过'}];
+  const currentStep=item.status==='rejected'?-1:steps.findIndex(s=>s.key===item.status);
+  const progressHtml=`<div class="progress-bar">${steps.map((s,i)=>`<div class="step ${i<=currentStep?'done':''} ${item.status==='rejected'&&i===currentStep+1?'rejected':''}">${s.label}</div>`).join('<div class="step-line ${i<=currentStep?\'done\':\'\'}"></div>')}</div>`;
+
+  // NG项列表
+  const ngListHtml=ngItems.length?`<div style="margin:8px 0;"><strong style="color:#dc3545;">NG项(${ngCount})：</strong><ul style="margin:4px 0 0 16px;font-size:12px;">${ngItems.map(ci=>`<li>${ci.no}. ${ci.desc.slice(0,30)}${ci.desc.length>30?'...':''}</li>`).join('')}</ul></div>`:'';
+
+  // 审批历史时间线
+  let timelineHtml='';
+  if(approvals&&approvals.length){
+    const userMap={};
+    const allUsers=await db.query('users','');
+    (allUsers||[]).forEach(u=>{userMap[u.id]=u.name;});
+    timelineHtml=`<div class="timeline"><strong>审批记录：</strong>${approvals.map(a=>`<div class="timeline-item ${a.action}"><span class="timeline-dot"></span><span>${userMap[a.user_id]||'未知'} <b>${a.action==='approve'?'✓ 通过':'✗ 驳回'}</b></span><small>${new Date(a.created_at).toLocaleString('zh-CN')}</small>${a.comment?'<div class="timeline-comment">'+a.comment+'</div>':''}</div>`).join('')}</div>`;
+  }
+
+  // 详细检查项
+  const checkDetailHtml=`<details style="margin:8px 0;"><summary style="cursor:pointer;font-size:13px;font-weight:bold;">查看全部42项检查结果</summary><div class="table-wrap" style="margin-top:8px;"><table class="checklist-table"><thead><tr><th>序号</th><th>工位</th><th>确认项目</th><th>结果</th><th>数值</th></tr></thead><tbody>${checkItems.map(ci=>{const v=f['chk_'+ci.no]||'-';const val=f['chkval_'+ci.no]||'';return `<tr style="${v==='NG'?'background:#fde2e2;':''}"><td>${ci.no}</td><td>${ci.station}</td><td style="text-align:left;font-size:11px;">${ci.desc.slice(0,40)}</td><td style="font-weight:bold;color:${v==='OK'?'#28a745':v==='NG'?'#dc3545':'#999'}">${v}</td><td>${val}</td></tr>`;}).join('')}</tbody></table></div></details>`;
+
   const detailHtml=`
     <div class="detail-panel" id="detail-${id}">
-      <p><strong>机型:</strong> ${f.f_model||'-'} | <strong>SN:</strong> ${f.f_sn||'-'} | <strong>工单:</strong> ${f.f_order||'-'}</p>
-      <p><strong>检查结果:</strong> OK: ${okCount} / NG: ${ngCount} / 总: 42</p>
-      <p><strong>结论:</strong> ${f.f_conclusion||'-'}</p>
-      ${canApprove?`<div class="actions">
-        <button class="btn-approve" onclick="doApprove('${id}','approve')">通过</button>
-        <button class="btn-reject" onclick="doApprove('${id}','reject')">驳回</button>
-      </div>`:'<p style="color:#888;margin-top:8px;">无审批权限</p>'}
+      <div class="detail-header">
+        <h4 style="margin-bottom:8px;">📋 检查表详情</h4>
+        ${progressHtml}
+        ${item.status==='rejected'?'<p style="color:#dc3545;font-weight:bold;margin:8px 0;">❌ 已驳回</p>':''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:13px;margin:12px 0;">
+        <p><strong>机型:</strong> ${f.f_model||'-'}</p>
+        <p><strong>SN:</strong> ${f.f_sn||'-'}</p>
+        <p><strong>工单:</strong> ${f.f_order||'-'}</p>
+        <p><strong>日期:</strong> ${f.f_date||'-'}</p>
+        <p><strong>生产线:</strong> ${f.f_line||'-'}</p>
+        <p><strong>提交人:</strong> ${f.f_submitter||'-'}</p>
+      </div>
+      <div style="background:#f0f8f0;padding:8px 12px;border-radius:6px;margin:8px 0;">
+        <strong>检查结果：</strong> ✓ OK: <span style="color:#28a745;font-weight:bold;">${okCount}</span> &nbsp; ✗ NG: <span style="color:#dc3545;font-weight:bold;">${ngCount}</span> &nbsp; 总: 42
+      </div>
+      ${ngListHtml}
+      ${checkDetailHtml}
+      <p style="margin:8px 0;font-size:13px;"><strong>结论:</strong> ${f.f_conclusion||'-'}</p>
+      ${timelineHtml}
+      ${canApprove?`<div class="actions" style="margin-top:12px;">
+        <input type="text" id="comment-${id}" placeholder="审批意见（可选）" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;margin-bottom:8px;font-size:13px;">
+        <button class="btn-approve" onclick="doApprove('${id}','approve')">✓ 通过</button>
+        <button class="btn-reject" onclick="doApprove('${id}','reject')">✗ 驳回</button>
+      </div>`:''}
     </div>`;
-  // 插到对应item后
   const existing=document.getElementById('detail-'+id);
   if(existing){existing.remove();return;}
-  // 移除其他detail
   document.querySelectorAll('.detail-panel').forEach(el=>el.remove());
   event.target.closest('.list-item').insertAdjacentHTML('afterend',detailHtml);
 }
 
 async function doApprove(id, action){
   const user=getUser();
+  const comment=document.getElementById('comment-'+id)?.value||'';
   let newStatus;
   if(action==='reject') newStatus='rejected';
   else if(user.role==='engineer') newStatus='engineering';
   else newStatus='approved';
   try{
-    await db.update('forms',id,{status:newStatus});
-    await db.insert('approvals',{form_id:id,user_id:user.id,action:action,new_status:newStatus});
-    await notifyFeishu('📋 检查表审批更新',`**审批人**: ${user.name}\n**操作**: ${action==='reject'?'驳回':'通过'}\n**新状态**: ${statusText(newStatus)}\n**时间**: ${new Date().toLocaleString('zh-CN')}`);
+    await db.update('forms',id,{status:newStatus,updated_at:new Date().toISOString()});
+    await db.insert('approvals',{form_id:parseInt(id),user_id:user.id,role:user.role,action:action,comment:comment});
+    await notifyFeishu(action==='reject'?'❌ 检查表已驳回':'✅ 检查表审批通过',`**审批人**: ${user.name}\n**操作**: ${action==='reject'?'驳回':'通过'}\n**状态**: ${statusText(newStatus)}${comment?'\n**意见**: '+comment:''}\n**时间**: ${new Date().toLocaleString('zh-CN')}`);
     alert('操作成功');
+    document.querySelectorAll('.detail-panel').forEach(el=>el.remove());
     loadApprovals();
   }catch(e){alert('操作失败：'+e.message);}
 }
@@ -486,22 +543,8 @@ async function loadHistory(){
 }
 
 async function showHistoryDetail(id){
-  const items=await db.query('forms','id=eq.'+id);
-  if(!items||!items[0])return;
-  const item=items[0];
-  const f=item.fields||{};
-  let okCount=0,ngCount=0;
-  checkItems.forEach(ci=>{const v=f['chk_'+ci.no];if(v==='OK')okCount++;else if(v==='NG')ngCount++;});
-  const existing=document.getElementById('hist-detail-'+id);
-  if(existing){existing.remove();return;}
-  document.querySelectorAll('[id^=hist-detail]').forEach(el=>el.remove());
-  const html=`<div class="detail-panel" id="hist-detail-${id}">
-    <p><strong>机型:</strong> ${f.f_model||'-'} | <strong>SN:</strong> ${f.f_sn||'-'} | <strong>工单:</strong> ${f.f_order||'-'}</p>
-    <p><strong>日期:</strong> ${f.f_date||'-'} | <strong>生产线:</strong> ${f.f_line||'-'}</p>
-    <p><strong>检查结果:</strong> OK: ${okCount} / NG: ${ngCount} / 总: 42</p>
-    <p><strong>结论:</strong> ${f.f_conclusion||'-'}</p>
-  </div>`;
-  event.target.closest('.list-item').insertAdjacentHTML('afterend',html);
+  // 复用审批详情
+  await showApprovalDetail(id);
 }
 
 // 初始化
