@@ -681,11 +681,6 @@ if (viewId) {
       statusBar.innerHTML = `
         <span>📌 ${statusMap[status]||status}</span>
         ${user?`<span style="font-size:12px;opacity:0.85;">当前：${user.name}(${roleText})</span>`:''}
-        ${canApprove?`
-          <input type="text" id="approveComment" placeholder="审批意见（可选）" style="padding:4px 8px;border:none;border-radius:4px;font-size:13px;width:200px;">
-          <button onclick="doViewApprove('${viewId}','approve')" style="background:#28a745;color:#fff;border:2px solid #fff;padding:6px 20px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold;">✓ 通过</button>
-          <button onclick="doViewApprove('${viewId}','reject')" style="background:#dc3545;color:#fff;border:2px solid #fff;padding:6px 20px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold;">✗ 驳回</button>
-        `:''}
         <a href="index.html" style="color:#fff;text-decoration:underline;font-size:13px;">← 返回列表</a>
       `;
       document.body.prepend(statusBar);
