@@ -607,9 +607,15 @@ async function doApprove(id, action){
     } else if(newStatus==='approved'){
       pushTitle='✅ 检查表合格'; pushColor='green'; pushStatus='合格 — 审批完成';
     }
-    const formRecords=await db.query('forms','id=eq.'+id);
-    const msgId=formRecords?.[0]?.fields?._feishu_msg_id;
-    await replyFeishuMessage(msgId, pushTitle,`**审批人**: ${user.name}\n**操作**: ${action==='reject'?'驳回':'通过'}${comment?'\n**意见**: '+comment:''}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：${pushStatus}**`,pushColor);
+    try {
+      await fetch(FEISHU_WEBHOOK, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ msg_type: 'interactive', card: {
+          header: { title: { tag: 'plain_text', content: pushTitle }, template: pushColor },
+          elements: [{ tag: 'div', text: { tag: 'lark_md', content: `**审批人**: ${user.name}\n**操作**: ${action==='reject'?'驳回':'通过'}${comment?'\n**意见**: '+comment:''}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：${pushStatus}**` } }]
+        }})
+      });
+    } catch(e) { console.log('飞书推送失败', e); }
     alert('操作成功');
     document.querySelectorAll('.detail-panel').forEach(el=>el.remove());
     loadApprovals();

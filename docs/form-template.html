@@ -546,18 +546,16 @@ async function submitToCloud() {
     const records = await res.json();
     const formId = records[0]?.id;
 
-    // 飞书推送（用API发送，获取message_id）
-    const msgId = await sendFeishuMessage('📋 新检查表已提交',
-      `**提交人**: ${user.name}\n**机型**: ${fields.model||'-'}\n**SN**: ${fields.sn||'-'}\n**工单**: ${fields.workOrder||'-'}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：待工程审批**`,
-      'orange');
-
-    // 把message_id存到表单记录里
-    if (msgId && formId) {
-      await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${formId}`, {
-        method: 'PATCH', headers: SB_HEADERS,
-        body: JSON.stringify({ fields: { ...fields, _feishu_msg_id: msgId } })
+    // 飞书推送（用webhook，不阻塞提交）
+    try {
+      await fetch(FEISHU_WEBHOOK, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ msg_type: 'interactive', card: {
+          header: { title: { tag: 'plain_text', content: '📋 新检查表已提交' }, template: 'orange' },
+          elements: [{ tag: 'div', text: { tag: 'lark_md', content: `**提交人**: ${user.name}\n**机型**: ${fields.model||'-'}\n**SN**: ${fields.sn||'-'}\n**工单**: ${fields.workOrder||'-'}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：待工程审批**` } }]
+        }})
       });
-    }
+    } catch(e) { console.log('飞书推送失败，不影响提交', e); }
 
     alert('提交成功！已推送到飞书群。');
     localStorage.removeItem("checkForm_CX1E_16AUD");
@@ -627,12 +625,15 @@ async function doViewApprove(id, action, commentOverride) {
       pushTitle = '✅ 检查表合格'; pushColor = 'green'; pushStatus = '合格 — 审批完成';
     }
 
-    // 获取原消息的message_id，回复到同一话题
-    const formRecords = await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${id}&select=fields`, { headers: SB_HEADERS }).then(r=>r.json());
-    const msgId = formRecords?.[0]?.fields?._feishu_msg_id;
-    await replyFeishuMessage(msgId, pushTitle,
-      `**审批人**: ${user.name}\n**操作**: ${action === 'reject' ? '驳回' : '通过'}${comment ? '\n**意见**: ' + comment : ''}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：${pushStatus}**`,
-      pushColor);
+    try {
+      await fetch(FEISHU_WEBHOOK, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ msg_type: 'interactive', card: {
+          header: { title: { tag: 'plain_text', content: pushTitle }, template: pushColor },
+          elements: [{ tag: 'div', text: { tag: 'lark_md', content: `**审批人**: ${user.name}\n**操作**: ${action === 'reject' ? '驳回' : '通过'}${comment ? '\n**意见**: ' + comment : ''}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：${pushStatus}**` } }]
+        }})
+      });
+    } catch(e) { console.log('飞书推送失败', e); }
 
     alert(action === 'reject' ? '已驳回' : '已通过');
     location.href = 'index.html';
