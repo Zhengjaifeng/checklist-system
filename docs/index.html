@@ -212,6 +212,38 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f5f5; padding-top
 </div>
 </div>
 
+<!-- Admin Tab -->
+<div id="tab-admin" class="page">
+<div class="container">
+  <div class="card">
+    <h3 style="margin-bottom:12px;">用户管理</h3>
+    <div id="userList"></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
+      <h4 style="margin-bottom:8px;">添加用户</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="text" id="newBadge" placeholder="工号" style="padding:6px;border:1px solid #ccc;border-radius:4px;width:100px;">
+        <input type="text" id="newName" placeholder="姓名" style="padding:6px;border:1px solid #ccc;border-radius:4px;width:100px;">
+        <select id="newRole" style="padding:6px;border:1px solid #ccc;border-radius:4px;">
+          <option value="operator">生产</option>
+          <option value="engineer">工程师</option>
+          <option value="qa">质量</option>
+          <option value="admin">管理员</option>
+        </select>
+        <button onclick="addUser()" style="background:#1a73e8;color:#fff;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;">添加</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-bottom:12px;">数据管理</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="loadAllRecords()" style="background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">查看全部记录</button>
+      <button onclick="cleanTestData()" style="background:#dc3545;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">清理空记录</button>
+    </div>
+    <div id="allRecordsList" style="margin-top:12px;"></div>
+  </div>
+</div>
+</div>
+
 <!-- Approval Tab -->
 <div id="tab-approval" class="page">
 <div class="container">
@@ -447,6 +479,10 @@ function showApp(){
   if(user.role==='qa'||user.role==='engineer'){
     formTab.style.display='none';
   }
+  if(user.role==='admin'){
+    formTab.textContent='管理';
+    formTab.onclick=function(){ switchTab('admin',this); };
+  }
   if(user.role==='operator'){
     // 生产直接跳到填表页
     location.href='form-template.html';
@@ -467,6 +503,7 @@ function switchTab(tab, el){
   if(el) el.classList.add('active');
   if(tab==='approval') loadApprovals();
   if(tab==='history') loadHistory();
+  if(tab==='admin') loadUsers();
 }
 
 // 审批列表
@@ -632,6 +669,87 @@ async function doApprove(id, action){
     document.querySelectorAll('.detail-panel').forEach(el=>el.remove());
     loadApprovals();
   }catch(e){alert('操作失败：'+e.message);}
+}
+
+// === 管理功能 ===
+async function loadUsers(){
+  const users=await db.query('users','order=id');
+  const div=document.getElementById('userList');
+  const roleMap={operator:'生产',engineer:'工程师',qa:'质量',admin:'管理员'};
+  div.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <tr style="background:#f0f2f5;"><th style="padding:8px;text-align:left;">工号</th><th style="padding:8px;text-align:left;">姓名</th><th style="padding:8px;text-align:left;">角色</th><th style="padding:8px;">操作</th></tr>
+    ${(users||[]).map(u=>`<tr style="border-bottom:1px solid #eee;">
+      <td style="padding:8px;">${u.badge_no}</td>
+      <td style="padding:8px;">${u.name}</td>
+      <td style="padding:8px;">${roleMap[u.role]||u.role}</td>
+      <td style="padding:8px;text-align:center;"><button onclick="deleteUser(${u.id},'${u.name}')" style="background:#dc3545;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">删除</button></td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+async function addUser(){
+  const badge=document.getElementById('newBadge').value.trim().toUpperCase();
+  const name=document.getElementById('newName').value.trim();
+  const role=document.getElementById('newRole').value;
+  if(!badge||!name){alert('请填写工号和姓名');return;}
+  try{
+    await db.insert('users',{badge_no:badge,name:name,role:role});
+    alert('添加成功');
+    document.getElementById('newBadge').value='';
+    document.getElementById('newName').value='';
+    loadUsers();
+  }catch(e){alert('添加失败：'+e.message);}
+}
+
+async function deleteUser(id,name){
+  if(!confirm(`确认删除用户 ${name}？`))return;
+  await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${id}`,{
+    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  loadUsers();
+}
+
+async function loadAllRecords(){
+  const div=document.getElementById('allRecordsList');
+  const items=await db.query('forms','order=created_at.desc&limit=50');
+  const statusMap={submitted:'已提交',engineering:'工程已确认',approved:'已通过',rejected:'已驳回',draft:'草稿'};
+  div.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <tr style="background:#f0f2f5;"><th style="padding:6px;">ID</th><th style="padding:6px;">机型</th><th style="padding:6px;">SN</th><th style="padding:6px;">提交人</th><th style="padding:6px;">状态</th><th style="padding:6px;">时间</th><th style="padding:6px;">操作</th></tr>
+    ${(items||[]).map(i=>{const f=i.fields||{};return `<tr style="border-bottom:1px solid #eee;">
+      <td style="padding:6px;">${i.id}</td>
+      <td style="padding:6px;">${f.model||f.f_model||'-'}</td>
+      <td style="padding:6px;">${f.sn||f.f_sn||'-'}</td>
+      <td style="padding:6px;">${f._submitter||'-'}</td>
+      <td style="padding:6px;">${statusMap[i.status]||i.status}</td>
+      <td style="padding:6px;">${new Date(i.created_at).toLocaleString('zh-CN')}</td>
+      <td style="padding:6px;"><button onclick="deleteRecord(${i.id})" style="background:#dc3545;color:#fff;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:11px;">删除</button></td>
+    </tr>`;}).join('')}
+  </table>`;
+}
+
+async function deleteRecord(id){
+  if(!confirm('确认删除该记录？'))return;
+  await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${id}`,{
+    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  loadAllRecords();
+}
+
+async function cleanTestData(){
+  if(!confirm('确认清理所有机型和SN为空的记录？'))return;
+  const items=await db.query('forms','order=id');
+  let count=0;
+  for(const i of (items||[])){
+    const f=i.fields||{};
+    if(!f.model&&!f.f_model&&!f.sn&&!f.f_sn){
+      await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${i.id}`,{
+        method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+      });
+      count++;
+    }
+  }
+  alert(`已清理 ${count} 条空记录`);
+  loadAllRecords();
 }
 
 // 历史记录
