@@ -618,12 +618,23 @@ async function doApprove(id, action){
 async function loadHistory(){
   const div=document.getElementById('historyList');
   const filter=document.getElementById('historyFilter').value;
+  const user=getUser();
   div.innerHTML='加载中...';
   try{
     let query='order=created_at.desc';
     if(filter) query='status=eq.'+filter+'&'+query;
-    const items=await db.query('forms',query);
-    if(!items||items.length===0){div.innerHTML='<p style="color:#888;">暂无记录</p>';return;}
+    let items=await db.query('forms',query);
+    if(!items) items=[];
+
+    if(user.role==='operator'){
+      items=items.filter(i=>i.created_by===user.id);
+    } else if(user.role==='engineer'||user.role==='qa'){
+      const myApprovals=await db.query('approvals','user_id=eq.'+user.id+'&select=form_id');
+      const myFormIds=new Set((myApprovals||[]).map(a=>a.form_id));
+      items=items.filter(i=>myFormIds.has(i.id));
+    }
+
+    if(items.length===0){div.innerHTML='<p style="color:#888;">暂无记录</p>';return;}
     div.innerHTML=items.map(item=>{
       const f=item.fields||{};
       const model=f.model||f.f_model||'未填写';
