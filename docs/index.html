@@ -444,8 +444,8 @@ function showApp(){
   // 按角色控制Tab可见性
   const formTab=document.getElementById('tabBtn-form');
   const approvalTab=document.getElementById('tabBtn-approval');
-  if(user.role==='qa'){
-    formTab.style.display='none'; // 质量不能填表
+  if(user.role==='qa'||user.role==='engineer'){
+    formTab.style.display='none';
   }
   if(user.role==='operator'){
     // 生产直接跳到填表页
