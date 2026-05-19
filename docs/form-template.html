@@ -521,10 +521,8 @@ function resetForm() {
 }
 
 // === Supabase + 飞书推送集成 ===
-const SUPABASE_URL = 'https://zeqdztwcokuyjajaljqn.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_DBqOvz9tKJhqrR3fa4rX8A_9OWUbR17';
-const FEISHU_WEBHOOK = 'https://open.feishu.cn/open-apis/bot/v2/hook/4bca2958-28d9-4532-811a-b7a427f08320';
-const SB_HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+// 使用 api.js 中已定义的 SUPABASE_URL, SUPABASE_KEY, FEISHU_WEBHOOK
+const SB_HEADERS = headers; // api.js 中定义的 headers
 
 function getCurrentUser() {
   const s = localStorage.getItem('user');
