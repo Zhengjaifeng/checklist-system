@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首末件检查表（CX1E_16AUD）</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "SimSun", sans-serif; font-size: 12px; background: #f0f2f5; padding: 20px; }
+.page { max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+h1 { text-align: center; font-size: 20px; margin-bottom: 4px; }
+.doc-info { display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 10px; }
+.header-row { display: flex; gap: 0; border: 1px solid #333; border-bottom: none; }
+.header-row + .header-row { border-top: 1px solid #333; }
+.section-title { background: #d9e2f3; font-weight: bold; text-align: center; padding: 6px 4px; min-width: 80px; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+table, th, td { border: 1px solid #333; }
+th, td { padding: 5px 6px; text-align: center; vertical-align: middle; font-size: 12px; }
+th { background: #d9e2f3; font-weight: bold; }
+input[type="text"], input[type="date"], input[type="number"] {
+  border: none; border-bottom: 1px solid #999; outline: none; width: 100%; text-align: center;
+  font-size: 12px; padding: 2px 4px; background: transparent;
+}
+input[type="text"]:focus, input[type="date"]:focus { border-bottom-color: #1a73e8; }
+input[type="radio"], input[type="checkbox"] { margin: 0 2px; vertical-align: middle; }
+label { cursor: pointer; white-space: nowrap; }
+select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3px; }
+.radio-group { display: inline-flex; gap: 12px; align-items: center; }
+.info-table { margin-bottom: 0; }
+.info-table td { height: 30px; }
+.info-table .label { background: #eef2f7; font-weight: bold; white-space: nowrap; width: 100px; }
+.check-table td { height: 28px; }
+.check-table .seq { width: 40px; }
+.check-table .item-desc { text-align: left; padding-left: 8px; min-width: 280px; }
+.check-table .spec { text-align: left; padding-left: 8px; }
+.check-table .sc { width: 40px; font-weight: bold; }
+.check-table .val { width: 70px; }
+.check-table .okng { width: 55px; }
+.check-table .remark { width: 130px; }
+.check-table .sign { width: 60px; }
+.section-header { background: #b4c6e7; font-weight: bold; text-align: center; }
+.sub-section { background: #dce6f1; font-weight: bold; }
+.conclusion { margin-top: 0; }
+.conclusion textarea { width: 100%; height: 60px; border: 1px solid #999; font-size: 12px; padding: 6px; resize: vertical; }
+.note { background: #fff3cd; padding: 8px; border: 1px solid #333; border-top: none; font-size: 11px; line-height: 1.6; }
+.btn-bar { text-align: center; margin-top: 20px; }
+.btn-bar button { padding: 8px 30px; margin: 0 10px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
+.btn-save { background: #1a73e8; color: #fff; }
+.btn-save:hover { background: #1557b0; }
+.btn-print { background: #fff; border: 1px solid #333 !important; }
+.btn-print:hover { background: #f5f5f5; }
+.btn-reset { background: #dc3545; color: #fff; }
+.btn-reset:hover { background: #b02a37; }
+.btn-export { background: #28a745; color: #fff; }
+.btn-export:hover { background: #1e7e34; }
+@media print {
+  body { padding: 0; background: #fff; }
+  .page { box-shadow: none; padding: 10px; }
+  .btn-bar { display: none; }
+  input[type="text"], input[type="date"] { border-bottom: none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- 文件编号区 -->
+  <div style="text-align:right;font-size:11px;color:#666;line-height:1.8;margin-bottom:4px;">
+    文件编号：P09-S10-F01-020<br>
+    版&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A0
+  </div>
+
+  <h1>首末件检查表（CX1E_16AUD）</h1>
+
+  <!-- 模板编号 + 首/末件 + 版本（与下方表格合并，无独立边框） -->
+  <table class="info-table" style="margin-top:6px;border-bottom:none;">
+    <tr>
+      <td style="text-align:left;padding-left:10px;width:30%;border:1px solid #333;border-bottom:1px solid #333;">模板编号：P09-S10-F01</td>
+      <td style="text-align:center;width:40%;border:1px solid #333;border-bottom:1px solid #333;">
+        首/末件：
+        <span class="radio-group" style="margin-left:10px;">
+          <label><input type="radio" name="type" value="首件"> 首件</label>
+          <label><input type="radio" name="type" value="末件"> 末件</label>
+        </span>
+      </td>
+      <td style="text-align:right;padding-right:10px;width:30%;border:1px solid #333;border-bottom:1px solid #333;">版本：V1.0</td>
+    </tr>
+  </table>
+
+  <!-- 生产填写 + 工程填写统一表格（共用右侧签名列） -->
+  <table class="info-table">
+    <!-- === 生产填写 R4: 机型/日期/工单/批量 === -->
+    <tr>
+      <td class="label" rowspan="5" style="width:70px;background:#b4c6e7;writing-mode:vertical-lr;letter-spacing:4px;">生产填写</td>
+      <td class="label" style="width:100px;">机&nbsp;&nbsp;&nbsp;&nbsp;型</td>
+      <td colspan="3"><input type="text" id="model"></td>
+      <td class="label" style="width:70px;">生产日期</td>
+      <td colspan="2"><input type="date" id="prodDate"></td>
+      <td class="label" style="width:50px;">工&nbsp;&nbsp;单</td>
+      <td colspan="3"><input type="text" id="workOrder"></td>
+      <td class="label" style="width:40px;">批量</td>
+      <td><input type="text" id="batchQty" style="width:60px;"></td>
+      <td class="label" rowspan="5" style="width:60px;">生产签名</td>
+      <td rowspan="5" style="width:70px;"><input type="text" id="prodSign1"></td>
+      <td class="label" rowspan="5" style="width:60px;">工程签名</td>
+      <td rowspan="5" style="width:70px;"><input type="text" id="engSign1"></td>
+      <td class="label" rowspan="5" style="width:60px;">质量签名</td>
+      <td rowspan="5" style="width:70px;"><input type="text" id="qaSign1"></td>
+    </tr>
+    <!-- R5: SN/生产线/产品料号 -->
+    <tr>
+      <td class="label">SN</td>
+      <td colspan="3"><input type="text" id="sn"></td>
+      <td class="label">生&nbsp;产&nbsp;线</td>
+      <td colspan="2"><input type="text" id="prodLine"></td>
+      <td class="label">产品料号</td>
+      <td colspan="5"><input type="text" id="partNo"></td>
+    </tr>
+    <!-- R6: 物料变更 -->
+    <tr>
+      <td class="label">有无物料变更/替换</td>
+      <td colspan="3">
+        <div class="radio-group">
+          <label><input type="radio" name="materialChange" value="有"> 有</label>
+          <label><input type="radio" name="materialChange" value="无"> 无</label>
+        </div>
+      </td>
+      <td class="label" colspan="2">备注变更的物料</td>
+      <td colspan="7"><input type="text" id="materialChangeNote"></td>
+    </tr>
+    <!-- R7: 人员变更 -->
+    <tr>
+      <td class="label">有无人员变更</td>
+      <td colspan="3">
+        <div class="radio-group">
+          <label><input type="radio" name="staffChange" value="有"> 有</label>
+          <label><input type="radio" name="staffChange" value="无"> 无</label>
+        </div>
+      </td>
+      <td class="label" colspan="2">备注变更的工位</td>
+      <td colspan="7"><input type="text" id="staffChangeNote"></td>
+    </tr>
+    <!-- R8: SOP一致性 -->
+    <tr>
+      <td class="label" style="font-size:11px;">各工位所发物料是否跟SOP一致</td>
+      <td colspan="3">
+        <div class="radio-group">
+          <label><input type="radio" name="sopMatch" value="是"> 是</label>
+          <label><input type="radio" name="sopMatch" value="否"> 否</label>
+        </div>
+      </td>
+      <td class="label" colspan="2">备注不一致的工位</td>
+      <td colspan="7"><input type="text" id="sopMatchNote"></td>
+    </tr>
+
+    <!-- === 工程填写 R9-R12 === -->
+    <tr>
+      <td class="label" rowspan="4" style="width:70px;background:#b4c6e7;writing-mode:vertical-lr;letter-spacing:4px;">工程填写</td>
+      <td class="label">有无工艺变更</td>
+      <td colspan="3">
+        <div class="radio-group">
+          <label><input type="radio" name="processChange" value="有"> 有</label>
+          <label><input type="radio" name="processChange" value="无"> 无</label>
+        </div>
+      </td>
+      <td class="label" colspan="2">备注变更的工艺</td>
+      <td colspan="7"><input type="text" id="processChangeNote"></td>
+      <td class="label" rowspan="4" style="width:60px;">生产签名</td>
+      <td rowspan="4" style="width:70px;"><input type="text" id="prodSign2"></td>
+      <td class="label" rowspan="4" style="width:60px;">工程签名</td>
+      <td rowspan="4" style="width:70px;"><input type="text" id="engSign2"></td>
+      <td class="label" rowspan="4" style="width:60px;">质量签名</td>
+      <td rowspan="4" style="width:70px;"><input type="text" id="qaSign2"></td>
+    </tr>
+    <tr>
+      <td class="label" style="font-size:11px;">有无联络、EN/ECN需要执行</td>
+      <td colspan="3">
+        <div class="radio-group">
+          <label><input type="radio" name="ecnExec" value="有"> 有</label>
+          <label><input type="radio" name="ecnExec" value="无"> 无</label>
+        </div>
+      </td>
+      <td class="label" colspan="2">备注执行的文件</td>
+      <td colspan="7"><input type="text" id="ecnExecNote"></td>
+    </tr>
+    <tr>
+      <td class="label" style="font-size:11px;">SOP上面物料是否跟BOM一致</td>
+      <td colspan="3">
+        <div class="radio-group">
+          <label><input type="radio" name="bomMatch" value="是"> 是</label>
+          <label><input type="radio" name="bomMatch" value="否"> 否</label>
+        </div>
+      </td>
+      <td class="label" colspan="2">备注不一致的物料</td>
+      <td colspan="7"><input type="text" id="bomMatchNote"></td>
+    </tr>
+    <tr>
+      <td class="label" style="font-size:11px;">设备/仪器参数是否满足要求</td>
+      <td colspan="3">
+        <div class="radio-group">
+          <label><input type="radio" name="equipOk" value="是"> 是</label>
+          <label><input type="radio" name="equipOk" value="否"> 否</label>
+        </div>
+      </td>
+      <td class="label" colspan="2">备注不一致的仪器</td>
+      <td colspan="7"><input type="text" id="equipNote"></td>
+    </tr>
+
+    <!-- === 首末件确认 R13 === -->
+    <tr>
+      <td class="label" style="width:70px;background:#b4c6e7;">首末件确认</td>
+      <td class="label">上一工单号</td>
+      <td colspan="2"><input type="text" id="prevWorkOrder"></td>
+      <td class="label" style="font-size:11px;">上一工单末件SN</td>
+      <td colspan="3"><input type="text" id="prevSN"></td>
+      <td class="label" style="font-size:11px;">上一工单生产日期</td>
+      <td colspan="5"><input type="date" id="prevDate"></td>
+      <td class="label" colspan="2">确认结果</td>
+      <td colspan="4">
+        <div class="radio-group">
+          <label><input type="radio" name="confirmResult" value="OK"> OK</label>
+          <label><input type="radio" name="confirmResult" value="NG"> NG</label>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- 主检查表 -->
+  <table class="check-table">
+    <thead>
+      <tr>
+        <th style="width:60px;">工艺段</th>
+        <th style="width:100px;">工位</th>
+        <th class="seq">序号</th>
+        <th class="item-desc">确认项目（SOP）</th>
+        <th style="width:160px;">规格/标准</th>
+        <th class="sc">特殊特性</th>
+        <th class="val">生产-数值</th>
+        <th class="okng">生产-OK/NG</th>
+        <th class="val">品质-数值</th>
+        <th class="okng">品质-OK/NG</th>
+        <th class="remark">备注</th>
+        <th class="sign">生产签名</th>
+        <th class="sign">工程签名</th>
+        <th class="sign">质量签名</th>
+      </tr>
+    </thead>
+    <tbody id="checkBody">
+    </tbody>
+  </table>
+
+  <!-- 最终结论 -->
+  <table class="conclusion">
+    <tr>
+      <td class="label" style="width:80px;background:#b4c6e7;">最终结论</td>
+      <td><textarea id="conclusion" placeholder="填写最终结论..."></textarea></td>
+      <td class="label" style="width:80px;">确认人</td>
+      <td style="width:120px;"><input type="text" id="confirmer"></td>
+    </tr>
+  </table>
+
+  <div class="note">
+    备注：点检NG后现场PE工程师及时给出原因对策，由质量、生产确认对策有效后三方签名方可生产！
+    首件完成时间需在开班2H内完成，超出时间未完成需要停线确认完成后方可启动生产。
+  </div>
+
+  <div class="btn-bar">
+    <div id="loginStatus" style="margin-bottom:10px;font-size:13px;"></div>
+    <button class="btn-save" onclick="submitToCloud()">提交到云端</button>
+    <button class="btn-export" onclick="saveForm()">保存草稿</button>
+    <button class="btn-print" onclick="window.print()">打印</button>
+    <button class="btn-reset" onclick="resetForm()">重置</button>
+    <a href="index.html" style="margin-left:10px;font-size:13px;">→ 审批/历史</a>
+  </div>
+</div>
+
+<script>
+const checkItems = [
+  // [工艺段, 工位, 序号, 确认项目, 规格/标准, 特殊特性, 输入类型]
+  // 输入类型: "okng"=只填OK/NG, "val"=填数值+OK/NG
+  ["组装", "PCBA取料", 1, "PCBA来料外观良好，无连锡、锡珠、撞件、脏污、异物残留，PIN针无退PIN、歪斜、少PIN等不良", "", "//", "okng"],
+  ["", "", 2, "PCBA 料号正确（PCBA料号：002.011.0001650）", "", "//", "okng"],
+  ["", "", 3, "PCBA平行放入治具，不倾斜、浮高，不撞件（主板放置方向：连接器一面朝下，且连接器置于工装治具上主板放置位置左边）", "", "//", "okng"],
+  ["", "底壳上料", 4, "底壳料号正确（散热支架料号：004.068.0054039）", "", "//", "okng"],
+  ["", "", 5, "底壳来料外观无变形、划伤、破损等不良，上料方向（连接器凹槽朝向物料盒右边）正确", "", "//", "okng"],
+  ["", "上盖上料", 6, "上盖料号正确（金属后盖料号：004.069.0070906）", "", "//", "okng"],
+  ["", "", 7, "条码按要求位置（L丝印框内）粘贴平整、牢固、内容正确，清晰可读，无翘边、脏污、破损等不良", "", "//", "okng"],
+  ["", "", 8, "上盖来料外观无变形、划痕、破损等不良，上料方向（上盖条码朝右）正确", "", "//", "okng"],
+  ["", "涂散热硅脂", 9, "胶量：散热胶用量3.8±0.5g", "", "//", "val"],
+  ["", "", 10, "涂覆状态：所有与发热芯片接触的散热片凸台上均要涂覆到位，无遗漏", "", "//", "okng"],
+  ["", "", 11, "胶水型号：型号规格正确（HiC-Pad6000LV，锐腾600CC），不超期（热凝胶料号：004.063.0052748）", "", "//", "okng"],
+  ["", "上下壳组装", 12, "主板装配对齐压铸件定位导向、无晃动，不浮高", "", "//", "okng"],
+  ["", "", 13, "上盖装配对齐压铸件定位导向、无晃动、不浮高", "", "//", "okng"],
+  ["", "锁付螺丝1", 14, "螺丝规格型号：T10梅花槽 ST2.6×8mm（螺丝料号：004.043.0055749）", "", "//", "okng"],
+  ["", "", 15, "5颗螺丝紧固到位，数量准确、无浮高、滑牙、滑头、倾斜等不良", "", "//", "okng"],
+  ["", "锁付螺丝2", 16, "螺丝规格型号：T10梅花槽 ST2.6×8mm（螺丝料号：004.043.0055749）", "", "//", "okng"],
+  ["", "", 17, "5颗螺丝紧固到位，数量准确、无浮高、滑牙、滑头、倾斜等不良", "", "//", "okng"],
+  ["", "成品下料", 18, "放品放于轨道绿色皮带上，不磕伤产品", "", "//", "okng"],
+
+  ["测试段", "老化测试", 19, "过温检测", "老化时产品自诊断过温并记录到产品log", "//", "okng"],
+  ["", "", 20, "接插件状态", "连接器无破损、引脚无变形、无退PIN等不良", "//", "okng"],
+  ["", "", 21, "老化结果", "设备提示OK", "//", "okng"],
+  ["", "震动EOL测试", 22, "软件版本", "与实际版本一致", "//", "val"],
+  ["", "", 23, "硬件版本", "与实际版本一致", "//", "val"],
+  ["", "", 24, "接插件外观检查", "连接器无破损、引脚无变形、无退PIN等不良", "//", "okng"],
+  ["", "", 25, "全声道输出", "满足测试指南要求：所有输出通道1000Hz输出2.0±0.2Vrms", "//", "okng"],
+  ["", "", 26, "暗电流", "<0.1mA", "【3】", "val"],
+  ["", "", 27, "残留杂音", "<100uVrms", "【3】", "val"],
+  ["", "", 28, "失真率", "＜0.1%", "【3】", "val"],
+  ["", "", 29, "频率响应（20~20KHz）", "-1.5～+0.5dB", "【3】", "val"],
+  ["", "", 30, "测试结果", "可正常通过测试", "//", "okng"],
+  ["", "GP12", 31, "各个声道输出", "声音清晰明亮无POPO音，无断续，无异音，无噪声杂音", "//", "okng"],
+  ["", "", 32, "开关机POPO音检查", "无POPO音", "//", "okng"],
+  ["", "", 33, "MOUTE ON/OFF时POPO音检查", "无POPO音", "//", "okng"],
+  ["", "", 34, "EPC标识", "EPC标识粘贴平整，位置正确，无起翘漏贴", "//", "okng"],
+  ["", "", 35, "测试结果", "可正常通过测试", "//", "okng"],
+
+  ["包装", "PIN针检测&目检", 36, "检查PIN脚无少PIN、断PIN、歪斜", "", "//", "okng"],
+  ["", "", 37, "正常通过PIN针测试", "", "//", "okng"],
+  ["", "", 38, "打印内容与包装规范一致，清晰，无重影、模糊、断针少线等异常，2个标签SN号一致，粘贴位置正确", "", "//", "okng"],
+  ["", "", 39, "外壳无变形，无螺丝漏锁、倾斜、滑牙、浮高不良，满足产品检验基准书要求", "", "//", "okng"],
+  ["", "包装", 40, "外箱EPC标识粘贴平整，无起翘漏贴", "", "//", "okng"],
+  ["", "", 41, "客户标签信息完整、准确，与包装规范内容一致，且粘贴平整，无起翘漏贴", "", "//", "okng"],
+  ["", "", 42, "无多装、少装、摆放方式正确，与包装规范要求一致", "", "//", "okng"],
+];
+
+function buildTable() {
+  const tbody = document.getElementById("checkBody");
+  let lastSection = "", lastStation = "";
+  let sectionStart = 0, stationStart = 0;
+  const rows = [];
+
+  checkItems.forEach((item, i) => {
+    const [section, station, seq, desc, spec, sc, inputType] = item;
+    const tr = document.createElement("tr");
+
+    // 工艺段
+    const tdSec = document.createElement("td");
+    if (section) {
+      tdSec.textContent = section;
+      tdSec.className = "section-header";
+      lastSection = section;
+      sectionStart = i;
+    }
+    tr.appendChild(tdSec);
+
+    // 工位
+    const tdSta = document.createElement("td");
+    if (station) {
+      tdSta.textContent = station;
+      tdSta.className = "sub-section";
+      lastStation = station;
+      stationStart = i;
+    }
+    tr.appendChild(tdSta);
+
+    // 序号
+    const tdSeq = document.createElement("td");
+    tdSeq.textContent = seq;
+    tdSeq.className = "seq";
+    tr.appendChild(tdSeq);
+
+    // 确认项目
+    const tdDesc = document.createElement("td");
+    tdDesc.textContent = desc;
+    tdDesc.className = "item-desc";
+    tr.appendChild(tdDesc);
+
+    // 规格/标准
+    const tdSpec = document.createElement("td");
+    tdSpec.textContent = spec;
+    tdSpec.className = "spec";
+    tr.appendChild(tdSpec);
+
+    // 特殊特性
+    const tdSc = document.createElement("td");
+    tdSc.textContent = sc;
+    tdSc.className = "sc";
+    tr.appendChild(tdSc);
+
+    // 生产-数值
+    const tdPVal = document.createElement("td");
+    tdPVal.className = "val";
+    if (inputType === "val") {
+      tdPVal.innerHTML = `<input type="text" name="pval_${seq}" placeholder="数值">`;
+    } else {
+      tdPVal.textContent = "/";
+    }
+    tr.appendChild(tdPVal);
+
+    // 生产-OK/NG
+    const tdPOk = document.createElement("td");
+    tdPOk.className = "okng";
+    tdPOk.innerHTML = `<select name="pokg_${seq}"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select>`;
+    tr.appendChild(tdPOk);
+
+    // 品质-数值
+    const tdQVal = document.createElement("td");
+    tdQVal.className = "val";
+    if (inputType === "val") {
+      tdQVal.innerHTML = `<input type="text" name="qval_${seq}" placeholder="数值">`;
+    } else {
+      tdQVal.textContent = "/";
+    }
+    tr.appendChild(tdQVal);
+
+    // 品质-OK/NG
+    const tdQOk = document.createElement("td");
+    tdQOk.className = "okng";
+    tdQOk.innerHTML = `<select name="qokg_${seq}"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select>`;
+    tr.appendChild(tdQOk);
+
+    // 备注
+    const tdRem = document.createElement("td");
+    tdRem.className = "remark";
+    tdRem.innerHTML = `<input type="text" name="remark_${seq}">`;
+    tr.appendChild(tdRem);
+
+    // 签名列
+    ["psign", "esign", "qsign"].forEach(prefix => {
+      const td = document.createElement("td");
+      td.className = "sign";
+      td.innerHTML = `<input type="text" name="${prefix}_${seq}">`;
+      tr.appendChild(td);
+    });
+
+    rows.push(tr);
+    tbody.appendChild(tr);
+  });
+
+  // 合并工艺段和工位的单元格
+  mergeCells(rows, 0); // 工艺段列
+  mergeCells(rows, 1); // 工位列
+  mergeSignCols(rows); // 签名列按段合并
+}
+
+function mergeCells(rows, colIdx) {
+  let i = 0;
+  while (i < rows.length) {
+    const cell = rows[i].children[colIdx];
+    if (cell.textContent) {
+      let span = 1;
+      for (let j = i + 1; j < rows.length; j++) {
+        if (!rows[j].children[colIdx].textContent) {
+          span++;
+        } else break;
+      }
+      if (span > 1) {
+        cell.rowSpan = span;
+        for (let j = i + 1; j < i + span; j++) {
+          rows[j].children[colIdx].style.display = "none";
+        }
+      }
+    }
+    i += (cell.rowSpan || 1);
+  }
+}
+
+function mergeSignCols(rows) {
+  // 按工艺段合并签名列(11,12,13)
+  let i = 0;
+  while (i < rows.length) {
+    const secCell = rows[i].children[0];
+    const span = secCell.rowSpan || 1;
+    [11, 12, 13].forEach(colIdx => {
+      const cell = rows[i].children[colIdx];
+      if (span > 1) {
+        cell.rowSpan = span;
+        cell.innerHTML = `<input type="text" name="sec_sign_${i}_${colIdx}">`;
+        for (let j = i + 1; j < i + span; j++) {
+          rows[j].children[colIdx].style.display = "none";
+        }
+      }
+    });
+    i += span;
+  }
+}
+
+function collectFormData() {
+  const data = {};
+  document.querySelectorAll("input, select, textarea").forEach(el => {
+    const key = el.name || el.id;
+    if (!key) return;
+    if (el.type === "radio") {
+      if (el.checked) data[key] = el.value;
+    } else {
+      data[key] = el.value;
+    }
+  });
+  return data;
+}
+
+function saveForm() {
+  const data = collectFormData();
+  localStorage.setItem("checkForm_CX1E_16AUD", JSON.stringify(data));
+  alert("草稿已保存！");
+}
+
+function loadForm() {
+  const saved = localStorage.getItem("checkForm_CX1E_16AUD");
+  if (!saved) return;
+  const data = JSON.parse(saved);
+  Object.entries(data).forEach(([key, val]) => {
+    const el = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
+    if (!el) return;
+    if (el.type === "radio") {
+      document.querySelectorAll(`[name="${key}"]`).forEach(r => { r.checked = r.value === val; });
+    } else {
+      el.value = val;
+    }
+  });
+}
+
+function resetForm() {
+  if (!confirm("确认清空所有已填写的数据？")) return;
+  document.querySelectorAll("input, select, textarea").forEach(el => {
+    if (el.type === "radio") el.checked = false;
+    else el.value = "";
+  });
+  localStorage.removeItem("checkForm_CX1E_16AUD");
+}
+
+// === Supabase + 飞书推送集成 ===
+const SUPABASE_URL = 'https://zeqdztwcokuyjajaljqn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_DBqOvz9tKJhqrR3fa4rX8A_9OWUbR17';
+const FEISHU_WEBHOOK = 'https://open.feishu.cn/open-apis/bot/v2/hook/4bca2958-28d9-4532-811a-b7a427f08320';
+const SB_HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+function getCurrentUser() {
+  const s = localStorage.getItem('user');
+  return s ? JSON.parse(s) : null;
+}
+
+async function submitToCloud() {
+  const user = getCurrentUser();
+  if (!user) { alert('请先登录！点击右上角登录按钮。'); return; }
+  if (user.role !== 'operator' && user.role !== 'admin') { alert('只有生产人员可以提交'); return; }
+
+  const btn = event.target; btn.disabled = true; btn.textContent = '提交中...';
+  try {
+    const fields = collectFormData();
+    fields._submitter = user.name;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/forms`, {
+      method: 'POST', headers: SB_HEADERS,
+      body: JSON.stringify({ created_by: user.id, status: 'submitted', fields: fields })
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // 飞书推送
+    await fetch(FEISHU_WEBHOOK, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ msg_type: 'interactive', card: {
+        header: { title: { tag: 'plain_text', content: '📋 新检查表已提交' }, template: 'blue' },
+        elements: [{ tag: 'div', text: { tag: 'lark_md', content: `**提交人**: ${user.name}\n**机型**: ${fields.model||'-'}\n**SN**: ${fields.sn||'-'}\n**工单**: ${fields.workOrder||'-'}\n**时间**: ${new Date().toLocaleString('zh-CN')}` } }]
+      }})
+    });
+
+    alert('提交成功！已推送到飞书群。');
+    localStorage.removeItem("checkForm_CX1E_16AUD");
+  } catch (e) {
+    alert('提交失败：' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '提交到云端';
+  }
+}
+
+function showLogin() {
+  const badge = prompt('请输入工号（如P001操作员/E001工程师/Q001质量）');
+  if (!badge) return;
+  fetch(`${SUPABASE_URL}/rest/v1/users?badge_no=eq.${badge.trim().toUpperCase()}`, { headers: SB_HEADERS })
+    .then(r => r.json())
+    .then(users => {
+      if (!users || users.length === 0) { alert('工号不存在'); return; }
+      localStorage.setItem('user', JSON.stringify(users[0]));
+      updateLoginStatus();
+      alert('登录成功：' + users[0].name);
+    }).catch(e => alert('登录失败：' + e.message));
+}
+
+function updateLoginStatus() {
+  const user = getCurrentUser();
+  const el = document.getElementById('loginStatus');
+  if (user) {
+    el.innerHTML = `<span style="color:#28a745;">●</span> ${user.name} <a href="#" onclick="localStorage.removeItem('user');updateLoginStatus();" style="color:#dc3545;margin-left:8px;">退出</a>`;
+  } else {
+    el.innerHTML = `<a href="#" onclick="showLogin()">登录</a>`;
+  }
+}
+
+buildTable();
+loadForm();
+updateLoginStatus();
+</script>
+</body>
+</html>
