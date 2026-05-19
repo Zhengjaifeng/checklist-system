@@ -113,9 +113,9 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f5f5; padding-top
 <nav class="navbar">
   <span class="title">首末件检查表</span>
   <div class="tabs">
-    <button class="active" onclick="switchTab('form')">填表</button>
-    <button onclick="switchTab('approval')">审批</button>
-    <button onclick="switchTab('history')">历史</button>
+    <button id="tabBtn-form" class="active" onclick="switchTab('form')">填表</button>
+    <button id="tabBtn-approval" onclick="switchTab('approval')">审批</button>
+    <button id="tabBtn-history" onclick="switchTab('history')">历史</button>
   </div>
   <div class="user-info">
     <span id="userName"></span>
@@ -357,10 +357,12 @@ function collectAllFormFields(){
 async function submitForm(){
   const user=getUser();
   if(!user){alert('请先登录');return;}
+  if(user.role!=='operator'&&user.role!=='admin'){alert('只有生产人员可以提交检查表');return;}
   const btn=document.querySelector('.submit-btn');
   btn.disabled=true; btn.textContent='提交中...';
   try{
     const fields=collectAllFormFields();
+    fields.f_submitter=user.name;
     const [record]=await db.insert('forms',{created_by:user.id,status:'submitted',fields:fields});
     await notifyFeishu('📋 新检查表已提交',`**提交人**: ${user.name}\n**机型**: ${fields.f_model}\n**SN**: ${fields.f_sn}\n**时间**: ${new Date().toLocaleString('zh-CN')}`);
     alert('提交成功！');
@@ -369,6 +371,48 @@ async function submitForm(){
   }finally{
     btn.disabled=false; btn.textContent='提交检查表';
   }
+}
+
+// 回退修改（提交后30分钟内）
+async function withdrawForm(id){
+  const items=await db.query('forms','id=eq.'+id);
+  if(!items||!items[0])return;
+  const item=items[0];
+  const user=getUser();
+  if(item.created_by!==user.id&&user.role!=='admin'){alert('只能回退自己提交的表单');return;}
+  if(item.status!=='submitted'){alert('只能回退"已提交"状态的表单');return;}
+  const submitTime=new Date(item.created_at).getTime();
+  const now=Date.now();
+  if(now-submitTime>30*60*1000){alert('已超过30分钟，无法回退');return;}
+  if(!confirm('确认回退该表单？回退后可重新编辑提交。'))return;
+  await db.update('forms',id,{status:'draft',updated_at:new Date().toISOString()});
+  alert('已回退，请在历史记录中找到该表单重新编辑');
+  loadApprovals();
+}
+
+// 重新编辑（加载draft表单到填写页）
+async function editDraft(id){
+  const items=await db.query('forms','id=eq.'+id);
+  if(!items||!items[0])return;
+  const item=items[0];
+  const f=item.fields||{};
+  // 切换到填表页
+  document.querySelectorAll('#mainApp .page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-form').classList.add('active');
+  // 填充字段
+  Object.entries(f).forEach(([k,v])=>{
+    if(k.startsWith('f_')&&!k.includes('change')&&!k.includes('match')){
+      const el=document.getElementById(k);
+      if(el)el.value=v||'';
+    }
+    if(k.startsWith('chk_')){
+      const el=document.getElementById(k);
+      if(el)el.value=v||'';
+    }
+  });
+  // 标记为编辑模式
+  window._editingFormId=id;
+  document.querySelector('.submit-btn').textContent='重新提交';
 }
 
 // 登录
@@ -395,9 +439,24 @@ function showApp(){
   const user=getUser();
   document.getElementById('loginPage').style.display='none';
   document.getElementById('mainApp').style.display='block';
-  document.getElementById('userName').textContent=user.name;
+  document.getElementById('userName').textContent=user.name+'('+{operator:'生产',engineer:'工程师',qa:'质量',admin:'管理员'}[user.role]+')';
   renderChecklist();
-  loadApprovals();
+  // 按角色控制Tab可见性
+  const formTab=document.getElementById('tabBtn-form');
+  const approvalTab=document.getElementById('tabBtn-approval');
+  if(user.role==='qa'){
+    formTab.style.display='none'; // 质量不能填表
+  }
+  if(user.role==='operator'){
+    // 生产默认显示填表页
+    document.querySelectorAll('#mainApp .page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tab-form').classList.add('active');
+  } else {
+    // 工程/质量/管理员默认显示审批页
+    document.querySelectorAll('#mainApp .page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tab-approval').classList.add('active');
+    loadApprovals();
+  }
 }
 
 // Tab切换
@@ -499,6 +558,8 @@ async function showApprovalDetail(id){
         <button class="btn-approve" onclick="doApprove('${id}','approve')">✓ 通过</button>
         <button class="btn-reject" onclick="doApprove('${id}','reject')">✗ 驳回</button>
       </div>`:''}
+      ${(user.id===item.created_by&&item.status==='submitted'&&(Date.now()-new Date(item.created_at).getTime()<30*60*1000))?`<div style="margin-top:8px;"><button onclick="withdrawForm('${id}')" style="background:#ff9800;color:#fff;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;font-size:13px;">↩ 回退修改（${Math.ceil((30*60*1000-(Date.now()-new Date(item.created_at).getTime()))/60000)}分钟内有效）</button></div>`:''}
+      ${(item.status==='draft'&&user.id===item.created_by)?`<div style="margin-top:8px;"><button onclick="editDraft('${id}')" style="background:#1a73e8;color:#fff;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;font-size:13px;">✏ 重新编辑</button></div>`:''}
     </div>`;
   const existing=document.getElementById('detail-'+id);
   if(existing){existing.remove();return;}
