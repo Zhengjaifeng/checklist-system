@@ -598,7 +598,7 @@ async function doApprove(id, action){
     await db.update('forms',id,{status:newStatus,updated_at:new Date().toISOString()});
     await db.insert('approvals',{form_id:parseInt(id),user_id:user.id,role:user.role,action:action,comment:comment});
 
-    // 按状态推送不同消息
+    // 按状态推送不同消息（回复到原消息）
     let pushTitle, pushColor, pushStatus;
     if(action==='reject'){
       pushTitle='❌ 检查表已驳回'; pushColor='red'; pushStatus='已驳回，请生产人员修改后重新提交';
@@ -607,7 +607,9 @@ async function doApprove(id, action){
     } else if(newStatus==='approved'){
       pushTitle='✅ 检查表合格'; pushColor='green'; pushStatus='合格 — 审批完成';
     }
-    await notifyFeishu(pushTitle,`**审批人**: ${user.name}\n**操作**: ${action==='reject'?'驳回':'通过'}${comment?'\n**意见**: '+comment:''}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：${pushStatus}**`);
+    const formRecords=await db.query('forms','id=eq.'+id);
+    const msgId=formRecords?.[0]?.fields?._feishu_msg_id;
+    await replyFeishuMessage(msgId, pushTitle,`**审批人**: ${user.name}\n**操作**: ${action==='reject'?'驳回':'通过'}${comment?'\n**意见**: '+comment:''}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：${pushStatus}**`,pushColor);
     alert('操作成功');
     document.querySelectorAll('.detail-panel').forEach(el=>el.remove());
     loadApprovals();
