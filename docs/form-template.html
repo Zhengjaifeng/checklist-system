@@ -589,6 +589,52 @@ function updateLoginStatus() {
   }
 }
 
+async function doViewApprove(id, action) {
+  const user = getCurrentUser();
+  if (!user) { alert('请先登录'); return; }
+  const comment = document.getElementById('approveComment')?.value || '';
+  let newStatus;
+  if (action === 'reject') newStatus = 'rejected';
+  else if (user.role === 'engineer') newStatus = 'engineering';
+  else newStatus = 'approved';
+
+  const btns = document.querySelectorAll('[onclick*="doViewApprove"]');
+  btns.forEach(b => { b.disabled = true; b.style.opacity = '0.5'; });
+
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${id}`, {
+      method: 'PATCH', headers: SB_HEADERS,
+      body: JSON.stringify({ status: newStatus, updated_at: new Date().toISOString() })
+    });
+    await fetch(`${SUPABASE_URL}/rest/v1/approvals`, {
+      method: 'POST', headers: SB_HEADERS,
+      body: JSON.stringify({ form_id: parseInt(id), user_id: user.id, role: user.role, action: action, comment: comment })
+    });
+
+    let pushTitle, pushColor, pushStatus;
+    if (action === 'reject') {
+      pushTitle = '❌ 检查表已驳回'; pushColor = 'red'; pushStatus = '已驳回，请生产人员修改后重新提交';
+    } else if (newStatus === 'engineering') {
+      pushTitle = '🔧 工程已确认'; pushColor = 'blue'; pushStatus = '待品质审批';
+    } else {
+      pushTitle = '✅ 检查表合格'; pushColor = 'green'; pushStatus = '合格 — 审批完成';
+    }
+    await fetch(FEISHU_WEBHOOK, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ msg_type: 'interactive', card: {
+        header: { title: { tag: 'plain_text', content: pushTitle }, template: pushColor },
+        elements: [{ tag: 'div', text: { tag: 'lark_md', content: `**审批人**: ${user.name}\n**操作**: ${action === 'reject' ? '驳回' : '通过'}${comment ? '\n**意见**: ' + comment : ''}\n**时间**: ${new Date().toLocaleString('zh-CN')}\n\n**📌 当前状态：${pushStatus}**` } }]
+      }})
+    });
+
+    alert(action === 'reject' ? '已驳回' : '已通过');
+    location.href = 'index.html';
+  } catch (e) {
+    alert('操作失败：' + e.message);
+    btns.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+  }
+}
+
 buildTable();
 
 // 检查是否是查看模式（URL带?id=xxx）
@@ -617,13 +663,33 @@ if (viewId) {
       // 显示状态栏
       const statusMap = { submitted:'待工程审批', engineering:'待品质审批', approved:'合格', rejected:'已驳回', draft:'草稿' };
       const colorMap = { submitted:'#ff9800', engineering:'#1a73e8', approved:'#28a745', rejected:'#dc3545', draft:'#999' };
+      const user = getCurrentUser();
+      const canApprove = user && (
+        (user.role==='engineer' && status==='submitted') ||
+        (user.role==='qa' && status==='engineering') ||
+        user.role==='admin'
+      );
+      const roleText = user ? {operator:'生产',engineer:'工程师',qa:'质量',admin:'管理员'}[user.role] : '';
+
       const statusBar = document.createElement('div');
-      statusBar.style.cssText = `position:fixed;top:0;left:0;right:0;background:${colorMap[status]||'#999'};color:#fff;text-align:center;padding:10px;font-size:15px;font-weight:bold;z-index:9999;`;
-      statusBar.innerHTML = `📌 ${statusMap[status]||status} &nbsp;&nbsp; <a href="index.html" style="color:#fff;margin-left:20px;text-decoration:underline;">← 返回列表</a>`;
+      statusBar.style.cssText = `position:fixed;top:0;left:0;right:0;background:${colorMap[status]||'#999'};color:#fff;text-align:center;padding:8px 16px;font-size:14px;font-weight:bold;z-index:9999;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;`;
+      statusBar.innerHTML = `
+        <span>📌 ${statusMap[status]||status}</span>
+        ${user?`<span style="font-size:12px;opacity:0.85;">当前：${user.name}(${roleText})</span>`:''}
+        ${canApprove?`
+          <input type="text" id="approveComment" placeholder="审批意见（可选）" style="padding:4px 8px;border:none;border-radius:4px;font-size:13px;width:200px;">
+          <button onclick="doViewApprove('${viewId}','approve')" style="background:#28a745;color:#fff;border:2px solid #fff;padding:6px 20px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold;">✓ 通过</button>
+          <button onclick="doViewApprove('${viewId}','reject')" style="background:#dc3545;color:#fff;border:2px solid #fff;padding:6px 20px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold;">✗ 驳回</button>
+        `:''}
+        <a href="index.html" style="color:#fff;text-decoration:underline;font-size:13px;">← 返回列表</a>
+      `;
       document.body.prepend(statusBar);
-      document.body.style.paddingTop = '44px';
+      document.body.style.paddingTop = '50px';
       // 只读模式：禁用所有输入
       document.querySelectorAll('input,select,textarea').forEach(el => { el.disabled = true; });
+      // 重新启用审批意见输入框
+      const commentInput = document.getElementById('approveComment');
+      if(commentInput) commentInput.disabled = false;
       // 隐藏提交按钮，显示返回按钮
       document.querySelector('.btn-bar').innerHTML = `<a href="index.html" class="btn-save" style="text-decoration:none;display:inline-block;text-align:center;">← 返回审批列表</a> <button class="btn-print" onclick="window.print()">打印</button>`;
     } catch(e) { alert('加载失败：' + e.message); }
