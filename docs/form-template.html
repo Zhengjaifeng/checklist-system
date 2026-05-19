@@ -273,6 +273,7 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
   </div>
 </div>
 
+<script src="api.js"></script>
 <script>
 const checkItems = [
   // [工艺段, 工位, 序号, 确认项目, 规格/标准, 特殊特性, 输入类型]
@@ -544,6 +545,8 @@ async function submitToCloud() {
       body: JSON.stringify({ created_by: user.id, status: 'submitted', fields: fields })
     });
     if (!res.ok) throw new Error(await res.text());
+    const records = await res.json();
+    const formId = records[0]?.id;
 
     // 飞书推送（用API发送，获取message_id）
     const msgId = await sendFeishuMessage('📋 新检查表已提交',
@@ -551,15 +554,11 @@ async function submitToCloud() {
       'orange');
 
     // 把message_id存到表单记录里
-    if (msgId) {
-      const records = await res.json();
-      const formId = records[0]?.id;
-      if (formId) {
-        await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${formId}`, {
-          method: 'PATCH', headers: SB_HEADERS,
-          body: JSON.stringify({ fields: { ...fields, _feishu_msg_id: msgId } })
-        });
-      }
+    if (msgId && formId) {
+      await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${formId}`, {
+        method: 'PATCH', headers: SB_HEADERS,
+        body: JSON.stringify({ fields: { ...fields, _feishu_msg_id: msgId } })
+      });
     }
 
     alert('提交成功！已推送到飞书群。');
