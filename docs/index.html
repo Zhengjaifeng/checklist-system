@@ -501,7 +501,7 @@ async function loadApprovals(){
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           <span class="badge badge-${item.status}">${statusText(item.status)}</span>
-          <button onclick="showApprovalDetail('${item.id}',document.getElementById('item-${item.id}'))" style="background:#1a73e8;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">查看</button>
+          <button onclick="location.href='form-template.html?id=${item.id}'" style="background:#1a73e8;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">查看</button>
           ${canAct?`
           <button onclick="event.stopPropagation();doApprove('${item.id}','approve')" style="background:#28a745;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">✓ 通过</button>
           <button onclick="event.stopPropagation();doApprove('${item.id}','reject')" style="background:#dc3545;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">✗ 驳回</button>
@@ -637,7 +637,7 @@ async function loadHistory(){
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           <span class="badge badge-${item.status}">${statusText(item.status)}</span>
-          <button onclick="showApprovalDetail('${item.id}',document.getElementById('item-${item.id}'))" style="background:#1a73e8;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">查看</button>
+          <button onclick="location.href='form-template.html?id=${item.id}'" style="background:#1a73e8;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">查看</button>
         </div>
       </div>`;
     }).join('');

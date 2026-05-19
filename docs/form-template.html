@@ -590,7 +590,47 @@ function updateLoginStatus() {
 }
 
 buildTable();
-loadForm();
+
+// 检查是否是查看模式（URL带?id=xxx）
+const urlParams = new URLSearchParams(location.search);
+const viewId = urlParams.get('id');
+if (viewId) {
+  // 查看模式：从云端加载数据并填充表单
+  (async function loadRecord() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${viewId}`, { headers: SB_HEADERS });
+      const records = await res.json();
+      if (!records || !records[0]) { alert('记录不存在'); return; }
+      const data = records[0].fields || {};
+      const status = records[0].status;
+      // 填充所有字段
+      Object.entries(data).forEach(([key, val]) => {
+        if (!val) return;
+        const el = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
+        if (!el) return;
+        if (el.type === "radio") {
+          document.querySelectorAll(`[name="${key}"]`).forEach(r => { r.checked = r.value === val; });
+        } else {
+          el.value = val;
+        }
+      });
+      // 显示状态栏
+      const statusMap = { submitted:'待工程审批', engineering:'待品质审批', approved:'合格', rejected:'已驳回', draft:'草稿' };
+      const colorMap = { submitted:'#ff9800', engineering:'#1a73e8', approved:'#28a745', rejected:'#dc3545', draft:'#999' };
+      const statusBar = document.createElement('div');
+      statusBar.style.cssText = `position:fixed;top:0;left:0;right:0;background:${colorMap[status]||'#999'};color:#fff;text-align:center;padding:10px;font-size:15px;font-weight:bold;z-index:9999;`;
+      statusBar.innerHTML = `📌 ${statusMap[status]||status} &nbsp;&nbsp; <a href="index.html" style="color:#fff;margin-left:20px;text-decoration:underline;">← 返回列表</a>`;
+      document.body.prepend(statusBar);
+      document.body.style.paddingTop = '44px';
+      // 只读模式：禁用所有输入
+      document.querySelectorAll('input,select,textarea').forEach(el => { el.disabled = true; });
+      // 隐藏提交按钮，显示返回按钮
+      document.querySelector('.btn-bar').innerHTML = `<a href="index.html" class="btn-save" style="text-decoration:none;display:inline-block;text-align:center;">← 返回审批列表</a> <button class="btn-print" onclick="window.print()">打印</button>`;
+    } catch(e) { alert('加载失败：' + e.message); }
+  })();
+} else {
+  loadForm();
+}
 updateLoginStatus();
 </script>
 </body>
