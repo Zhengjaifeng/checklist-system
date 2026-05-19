@@ -488,19 +488,25 @@ async function loadApprovals(){
     if(!items||items.length===0){div.innerHTML='<p style="color:#888;">暂无待审批记录</p>';return;}
     div.innerHTML=items.map(item=>{
       const f=item.fields||{};
-      const model=f.f_model||f.model||'-';
-      const sn=f.f_sn||f.sn||'-';
+      const model=f.model||f.f_model||'未填写';
+      const sn=f.sn||f.f_sn||'未填写';
+      const workOrder=f.workOrder||f.f_order||'';
+      const submitter=f._submitter||f.f_submitter||'未知';
       const canAct=(user.role==='engineer'&&item.status==='submitted')||(user.role==='qa'&&item.status==='engineering')||user.role==='admin';
       return `
-      <div class="list-item" id="item-${item.id}" style="flex-wrap:wrap;">
-        <div onclick="showApprovalDetail('${item.id}',document.getElementById('item-${item.id}'))" style="flex:1;cursor:pointer;">
-          <strong>${model}</strong> | SN: ${sn}<br><small>${new Date(item.created_at).toLocaleString('zh-CN')}</small>
+      <div class="list-item" id="item-${item.id}" style="flex-wrap:wrap;gap:8px;">
+        <div style="flex:1;min-width:200px;">
+          <strong>${model}</strong> | SN: ${sn}<br>
+          <small>工单: ${workOrder||'-'} | 提交人: ${submitter} | ${new Date(item.created_at).toLocaleString('zh-CN')}</small>
         </div>
-        <span class="badge badge-${item.status}">${statusText(item.status)}</span>
-        ${canAct?`<div style="display:flex;gap:6px;margin-left:8px;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge badge-${item.status}">${statusText(item.status)}</span>
+          <button onclick="showApprovalDetail('${item.id}',document.getElementById('item-${item.id}'))" style="background:#1a73e8;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">查看</button>
+          ${canAct?`
           <button onclick="event.stopPropagation();doApprove('${item.id}','approve')" style="background:#28a745;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">✓ 通过</button>
           <button onclick="event.stopPropagation();doApprove('${item.id}','reject')" style="background:#dc3545;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">✗ 驳回</button>
-        </div>`:''}
+          `:''}
+        </div>
       </div>`;
     }).join('');
   }catch(e){div.innerHTML='加载失败：'+e.message;}
@@ -550,12 +556,14 @@ async function showApprovalDetail(id, clickEl){
         ${item.status==='rejected'?'<p style="color:#dc3545;font-weight:bold;margin:8px 0;">❌ 已驳回</p>':''}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:13px;margin:12px 0;">
-        <p><strong>机型:</strong> ${f.f_model||f.model||'-'}</p>
-        <p><strong>SN:</strong> ${f.f_sn||f.sn||'-'}</p>
-        <p><strong>工单:</strong> ${f.f_order||f.workOrder||'-'}</p>
-        <p><strong>日期:</strong> ${f.f_date||f.prodDate||'-'}</p>
-        <p><strong>生产线:</strong> ${f.f_line||f.prodLine||'-'}</p>
-        <p><strong>提交人:</strong> ${f.f_submitter||f._submitter||'-'}</p>
+        <p><strong>机型:</strong> ${f.model||f.f_model||'-'}</p>
+        <p><strong>SN:</strong> ${f.sn||f.f_sn||'-'}</p>
+        <p><strong>工单:</strong> ${f.workOrder||f.f_order||'-'}</p>
+        <p><strong>日期:</strong> ${f.prodDate||f.f_date||'-'}</p>
+        <p><strong>生产线:</strong> ${f.prodLine||f.f_line||'-'}</p>
+        <p><strong>提交人:</strong> ${f._submitter||f.f_submitter||'-'}</p>
+        <p><strong>批量:</strong> ${f.batchQty||f.f_qty||'-'}</p>
+        <p><strong>产品料号:</strong> ${f.partNo||f.f_pn||'-'}</p>
       </div>
       <div style="background:#f0f8f0;padding:8px 12px;border-radius:6px;margin:8px 0;">
         <strong>检查结果：</strong> ✓ OK: <span style="color:#28a745;font-weight:bold;">${okCount}</span> &nbsp; ✗ NG: <span style="color:#dc3545;font-weight:bold;">${ngCount}</span> &nbsp; 总: 42
@@ -618,12 +626,19 @@ async function loadHistory(){
     if(!items||items.length===0){div.innerHTML='<p style="color:#888;">暂无记录</p>';return;}
     div.innerHTML=items.map(item=>{
       const f=item.fields||{};
-      const model=f.f_model||f.model||'-';
-      const sn=f.f_sn||f.sn||'-';
+      const model=f.model||f.f_model||'未填写';
+      const sn=f.sn||f.f_sn||'未填写';
+      const submitter=f._submitter||f.f_submitter||'未知';
       return `
-      <div class="list-item" id="item-${item.id}" onclick="showApprovalDetail('${item.id}',this)">
-        <div><strong>${model}</strong> | SN: ${sn}<br><small>${new Date(item.created_at).toLocaleString('zh-CN')}</small></div>
-        <span class="badge badge-${item.status}">${statusText(item.status)}</span>
+      <div class="list-item" id="item-${item.id}" style="flex-wrap:wrap;gap:8px;">
+        <div style="flex:1;min-width:200px;">
+          <strong>${model}</strong> | SN: ${sn}<br>
+          <small>提交人: ${submitter} | ${new Date(item.created_at).toLocaleString('zh-CN')}</small>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge badge-${item.status}">${statusText(item.status)}</span>
+          <button onclick="showApprovalDetail('${item.id}',document.getElementById('item-${item.id}'))" style="background:#1a73e8;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;">查看</button>
+        </div>
       </div>`;
     }).join('');
   }catch(e){div.innerHTML='加载失败：'+e.message;}
