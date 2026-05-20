@@ -38,6 +38,9 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
 .check-table .okng { width: 55px; }
 .check-table .remark { width: 130px; }
 .check-table .sign { width: 60px; }
+.eng-field { background: #f0f8e8; }
+.qa-field { background: #e8f4f0; }
+.field-disabled { opacity: 0.5; pointer-events: none; background: #f5f5f5 !important; }
 .section-header { background: #b4c6e7; font-weight: bold; text-align: center; }
 .sub-section { background: #dce6f1; font-weight: bold; }
 .conclusion { margin-top: 0; }
@@ -145,29 +148,29 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
       <td colspan="5"><input type="text" id="sopMatchNote"></td>
     </tr>
     <tr>
-      <td class="label" rowspan="4" style="background:#b4c6e7;writing-mode:vertical-lr;letter-spacing:4px;">工程填写</td>
+      <td class="label" rowspan="4" style="background:#c6e0b4;writing-mode:vertical-lr;letter-spacing:4px;">工程填写<br><small style="color:#c00;font-size:9px;">必填</small></td>
       <td class="label">有无工艺变更</td>
-      <td><div class="radio-group"><label><input type="radio" name="processChange" value="有"> 有</label><label><input type="radio" name="processChange" value="无"> 无</label></div></td>
+      <td class="eng-field"><div class="radio-group"><label><input type="radio" name="processChange" value="有" class="eng-input"> 有</label><label><input type="radio" name="processChange" value="无" class="eng-input"> 无</label></div></td>
       <td class="label">备注</td>
-      <td colspan="5"><input type="text" id="processChangeNote"></td>
+      <td colspan="5" class="eng-field"><input type="text" id="processChangeNote" class="eng-input"></td>
     </tr>
     <tr>
       <td class="label" style="font-size:11px;">有无EN/ECN需要执行</td>
-      <td><div class="radio-group"><label><input type="radio" name="ecnExec" value="有"> 有</label><label><input type="radio" name="ecnExec" value="无"> 无</label></div></td>
+      <td class="eng-field"><div class="radio-group"><label><input type="radio" name="ecnExec" value="有" class="eng-input"> 有</label><label><input type="radio" name="ecnExec" value="无" class="eng-input"> 无</label></div></td>
       <td class="label">备注</td>
-      <td colspan="5"><input type="text" id="ecnExecNote"></td>
+      <td colspan="5" class="eng-field"><input type="text" id="ecnExecNote" class="eng-input"></td>
     </tr>
     <tr>
       <td class="label" style="font-size:11px;">SOP物料是否跟BOM一致</td>
-      <td><div class="radio-group"><label><input type="radio" name="bomMatch" value="是"> 是</label><label><input type="radio" name="bomMatch" value="否"> 否</label></div></td>
+      <td class="eng-field"><div class="radio-group"><label><input type="radio" name="bomMatch" value="是" class="eng-input"> 是</label><label><input type="radio" name="bomMatch" value="否" class="eng-input"> 否</label></div></td>
       <td class="label">备注</td>
-      <td colspan="5"><input type="text" id="bomMatchNote"></td>
+      <td colspan="5" class="eng-field"><input type="text" id="bomMatchNote" class="eng-input"></td>
     </tr>
     <tr>
       <td class="label" style="font-size:11px;">设备/仪器参数是否满足</td>
-      <td><div class="radio-group"><label><input type="radio" name="equipOk" value="是"> 是</label><label><input type="radio" name="equipOk" value="否"> 否</label></div></td>
+      <td class="eng-field"><div class="radio-group"><label><input type="radio" name="equipOk" value="是" class="eng-input"> 是</label><label><input type="radio" name="equipOk" value="否" class="eng-input"> 否</label></div></td>
       <td class="label">备注</td>
-      <td colspan="5"><input type="text" id="equipNote"></td>
+      <td colspan="5" class="eng-field"><input type="text" id="equipNote" class="eng-input"></td>
     </tr>
     <tr>
       <td class="label" style="background:#b4c6e7;">首末件确认</td>
@@ -192,10 +195,10 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
         <th class="item-desc">确认项目（SOP）</th>
         <th style="width:160px;">规格/标准</th>
         <th class="sc">特殊特性</th>
-        <th class="val">生产-数值</th>
-        <th class="okng">生产-OK/NG</th>
-        <th class="val">品质-数值</th>
-        <th class="okng">品质-OK/NG</th>
+        <th class="val" style="background:#dce6f1;">生产-数值</th>
+        <th class="okng" style="background:#dce6f1;">生产-OK/NG</th>
+        <th class="val" style="background:#e2efda;">品质-数值</th>
+        <th class="okng" style="background:#e2efda;">品质-OK/NG</th>
         <th class="remark">备注</th>
       </tr>
     </thead>
@@ -351,9 +354,9 @@ function buildTable() {
 
     // 品质-数值
     const tdQVal = document.createElement("td");
-    tdQVal.className = "val";
+    tdQVal.className = "val qa-field";
     if (inputType === "val") {
-      tdQVal.innerHTML = `<input type="text" name="qval_${seq}" placeholder="数值">`;
+      tdQVal.innerHTML = `<input type="text" name="qval_${seq}" class="qa-input" placeholder="数值">`;
     } else {
       tdQVal.textContent = "/";
     }
@@ -361,8 +364,8 @@ function buildTable() {
 
     // 品质-OK/NG
     const tdQOk = document.createElement("td");
-    tdQOk.className = "okng";
-    tdQOk.innerHTML = `<select name="qokg_${seq}"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select>`;
+    tdQOk.className = "okng qa-field";
+    tdQOk.innerHTML = `<select name="qokg_${seq}" class="qa-input"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select>`;
     tr.appendChild(tdQOk);
 
     // 备注
@@ -601,6 +604,23 @@ async function saveTplChanges(){
   }catch(e){alert('保存失败：'+e.message);}
 }
 
+function applyRolePermissions(){
+  const user=getCurrentUser();
+  if(!user)return;
+  if(user.role==='operator'){
+    // 生产：禁用工程区域和品质列
+    document.querySelectorAll('.eng-input').forEach(el=>{el.disabled=true;});
+    document.querySelectorAll('.eng-field').forEach(el=>{el.classList.add('field-disabled');});
+    document.querySelectorAll('.qa-input').forEach(el=>{el.disabled=true;});
+    document.querySelectorAll('.qa-field').forEach(el=>{el.classList.add('field-disabled');});
+  } else if(user.role==='engineer'){
+    // 工程：禁用品质列（生产区域只读供查看）
+    document.querySelectorAll('.qa-input').forEach(el=>{el.disabled=true;});
+    document.querySelectorAll('.qa-field').forEach(el=>{el.classList.add('field-disabled');});
+  }
+  // 品质和管理员：全部可编辑
+}
+
 buildTable();
 
 // 加载模板选择列表
@@ -643,8 +663,8 @@ async function selectTemplate(id, name){
         <td class="sc">${item.sc||'//'}</td>
         <td class="val">${item.type==='val'?'<input type=\"text\" name=\"pval_'+item.no+'\">':'/'}</td>
         <td class="okng"><select name="pokg_${item.no}"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select></td>
-        <td class="val">${item.type==='val'?'<input type=\"text\" name=\"qval_'+item.no+'\">':'/'}</td>
-        <td class="okng"><select name="qokg_${item.no}"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select></td>
+        <td class="val qa-field">${item.type==='val'?'<input type=\"text\" name=\"qval_'+item.no+'\" class=\"qa-input\">':'/'}</td>
+        <td class="okng qa-field"><select name="qokg_${item.no}" class="qa-input"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select></td>
         <td class="remark"><input type="text" name="remark_${item.no}"></td>
       `;
       tbody.appendChild(tr);
@@ -659,6 +679,7 @@ async function selectTemplate(id, name){
     // 显示表单页
     document.getElementById('templateSelectPage').style.display='none';
     document.getElementById('formPage').style.display='block';
+    applyRolePermissions();
   }catch(e){alert('加载模板失败：'+e.message);}
 }
 
@@ -667,6 +688,7 @@ function useDefaultTemplate(){
   document.getElementById('formTitle').textContent='CX1E_16AUD首末件检查表';
   document.getElementById('templateSelectPage').style.display='none';
   document.getElementById('formPage').style.display='block';
+  applyRolePermissions();
 }
 
 // 初始化
