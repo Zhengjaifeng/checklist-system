@@ -172,7 +172,7 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
       <td class="label">备注</td>
       <td colspan="5" class="eng-field"><input type="text" id="equipNote" class="eng-input"></td>
     </tr>
-    <tr>
+    <tr id="confirmRow" style="display:none;">
       <td class="label" style="background:#b4c6e7;">首末件确认</td>
       <td class="label">上一工单号</td>
       <td><input type="text" id="prevWorkOrder"></td>
@@ -483,8 +483,10 @@ async function submitToCloud() {
   for (const r of requiredRadios) {
     if (!document.querySelector(`input[name="${r.name}"]:checked`)) { alert(`请选择：${r.label}`); return; }
   }
-  // 验证首末件确认结果
-  if (!document.querySelector('input[name="confirmResult"]:checked')) { alert('请选择首末件确认结果（OK/NG）'); return; }
+  // 验证首末件确认结果（仅管理员开启时验证）
+  if (document.getElementById('confirmRow').style.display !== 'none') {
+    if (!document.querySelector('input[name="confirmResult"]:checked')) { alert('请选择首末件确认结果（OK/NG）'); return; }
+  }
   // 验证所有生产OK/NG（备注列不验证）
   const allPokg = document.querySelectorAll('select[name^="pokg_"]');
   let missingPokg = 0;
@@ -661,6 +663,10 @@ async function saveTplChanges(){
 function applyRolePermissions(){
   const user=getCurrentUser();
   if(!user)return;
+  // 管理员显示首末件确认行
+  if(user.role==='admin'){
+    document.getElementById('confirmRow').style.display='';
+  }
   if(user.role==='operator'){
     // 生产：禁用工程区域和品质列
     document.querySelectorAll('.eng-input').forEach(el=>{el.disabled=true;});
