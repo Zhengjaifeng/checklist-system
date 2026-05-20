@@ -474,6 +474,17 @@ async function submitToCloud() {
   }
   // 验证首/末件选择
   if (!document.querySelector('input[name="type"]:checked')) { alert('请选择首件/末件'); return; }
+  // 验证生产区域radio必填
+  const requiredRadios = [
+    {name:'materialChange',label:'有无物料变更/替换'},
+    {name:'staffChange',label:'有无人员变更'},
+    {name:'sopMatch',label:'物料是否跟SOP一致'}
+  ];
+  for (const r of requiredRadios) {
+    if (!document.querySelector(`input[name="${r.name}"]:checked`)) { alert(`请选择：${r.label}`); return; }
+  }
+  // 验证首末件确认结果
+  if (!document.querySelector('input[name="confirmResult"]:checked')) { alert('请选择首末件确认结果（OK/NG）'); return; }
   // 验证所有生产OK/NG（备注列不验证）
   const allPokg = document.querySelectorAll('select[name^="pokg_"]');
   let missingPokg = 0;
