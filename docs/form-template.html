@@ -102,124 +102,115 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
     </tr>
   </table>
 
-  <!-- 生产填写 + 工程填写统一表格（共用右侧签名列） -->
+  <!-- 生产填写 + 工程填写统一表格 -->
   <table class="info-table">
-    <!-- === 生产填写 R4: 机型/日期/工单/批量 === -->
     <tr>
       <td class="label" rowspan="5" style="width:70px;background:#b4c6e7;writing-mode:vertical-lr;letter-spacing:4px;">生产填写</td>
       <td class="label" style="width:100px;">机&nbsp;&nbsp;&nbsp;&nbsp;型</td>
-      <td colspan="3"><input type="text" id="model"></td>
+      <td colspan="2"><input type="text" id="model"></td>
       <td class="label" style="width:70px;">生产日期</td>
-      <td colspan="2"><input type="date" id="prodDate"></td>
+      <td><input type="date" id="prodDate"></td>
       <td class="label" style="width:50px;">工&nbsp;&nbsp;单</td>
       <td colspan="3"><input type="text" id="workOrder"></td>
       <td class="label" style="width:40px;">批量</td>
-      <td><input type="text" id="batchQty" style="width:60px;"></td>
+      <td colspan="2"><input type="text" id="batchQty"></td>
     </tr>
-    <!-- R5: SN/生产线/产品料号 -->
     <tr>
       <td class="label">SN</td>
-      <td colspan="3"><input type="text" id="sn"></td>
+      <td colspan="2"><input type="text" id="sn"></td>
       <td class="label">生&nbsp;产&nbsp;线</td>
-      <td colspan="2"><input type="text" id="prodLine"></td>
+      <td><input type="text" id="prodLine"></td>
       <td class="label">产品料号</td>
-      <td colspan="5"><input type="text" id="partNo"></td>
+      <td colspan="4"><input type="text" id="partNo"></td>
     </tr>
-    <!-- R6: 物料变更 -->
     <tr>
       <td class="label">有无物料变更/替换</td>
-      <td colspan="3">
+      <td>
         <div class="radio-group">
           <label><input type="radio" name="materialChange" value="有"> 有</label>
           <label><input type="radio" name="materialChange" value="无"> 无</label>
         </div>
       </td>
-      <td class="label" colspan="2">备注变更的物料</td>
+      <td class="label">备注变更的物料</td>
       <td colspan="7"><input type="text" id="materialChangeNote"></td>
     </tr>
-    <!-- R7: 人员变更 -->
     <tr>
       <td class="label">有无人员变更</td>
-      <td colspan="3">
+      <td>
         <div class="radio-group">
           <label><input type="radio" name="staffChange" value="有"> 有</label>
           <label><input type="radio" name="staffChange" value="无"> 无</label>
         </div>
       </td>
-      <td class="label" colspan="2">备注变更的工位</td>
+      <td class="label">备注变更的工位</td>
       <td colspan="7"><input type="text" id="staffChangeNote"></td>
     </tr>
-    <!-- R8: SOP一致性 -->
     <tr>
       <td class="label" style="font-size:11px;">各工位所发物料是否跟SOP一致</td>
-      <td colspan="3">
+      <td>
         <div class="radio-group">
           <label><input type="radio" name="sopMatch" value="是"> 是</label>
           <label><input type="radio" name="sopMatch" value="否"> 否</label>
         </div>
       </td>
-      <td class="label" colspan="2">备注不一致的工位</td>
+      <td class="label">备注不一致的工位</td>
       <td colspan="7"><input type="text" id="sopMatchNote"></td>
     </tr>
-
-    <!-- === 工程填写 R9-R12 === -->
     <tr>
       <td class="label" rowspan="4" style="width:70px;background:#b4c6e7;writing-mode:vertical-lr;letter-spacing:4px;">工程填写</td>
       <td class="label">有无工艺变更</td>
-      <td colspan="3">
+      <td>
         <div class="radio-group">
           <label><input type="radio" name="processChange" value="有"> 有</label>
           <label><input type="radio" name="processChange" value="无"> 无</label>
         </div>
       </td>
-      <td class="label" colspan="2">备注变更的工艺</td>
+      <td class="label">备注变更的工艺</td>
       <td colspan="7"><input type="text" id="processChangeNote"></td>
     </tr>
     <tr>
       <td class="label" style="font-size:11px;">有无联络、EN/ECN需要执行</td>
-      <td colspan="3">
+      <td>
         <div class="radio-group">
           <label><input type="radio" name="ecnExec" value="有"> 有</label>
           <label><input type="radio" name="ecnExec" value="无"> 无</label>
         </div>
       </td>
-      <td class="label" colspan="2">备注执行的文件</td>
+      <td class="label">备注执行的文件</td>
       <td colspan="7"><input type="text" id="ecnExecNote"></td>
     </tr>
     <tr>
       <td class="label" style="font-size:11px;">SOP上面物料是否跟BOM一致</td>
-      <td colspan="3">
+      <td>
         <div class="radio-group">
           <label><input type="radio" name="bomMatch" value="是"> 是</label>
           <label><input type="radio" name="bomMatch" value="否"> 否</label>
         </div>
       </td>
-      <td class="label" colspan="2">备注不一致的物料</td>
+      <td class="label">备注不一致的物料</td>
       <td colspan="7"><input type="text" id="bomMatchNote"></td>
     </tr>
     <tr>
       <td class="label" style="font-size:11px;">设备/仪器参数是否满足要求</td>
-      <td colspan="3">
+      <td>
         <div class="radio-group">
           <label><input type="radio" name="equipOk" value="是"> 是</label>
           <label><input type="radio" name="equipOk" value="否"> 否</label>
         </div>
       </td>
-      <td class="label" colspan="2">备注不一致的仪器</td>
+      <td class="label">备注不一致的仪器</td>
       <td colspan="7"><input type="text" id="equipNote"></td>
     </tr>
-
-    <!-- === 首末件确认 R13 === -->
     <tr>
       <td class="label" style="width:70px;background:#b4c6e7;">首末件确认</td>
       <td class="label">上一工单号</td>
-      <td colspan="2"><input type="text" id="prevWorkOrder"></td>
-      <td class="label" style="font-size:11px;">上一工单末件SN</td>
-      <td colspan="3"><input type="text" id="prevSN"></td>
+      <td><input type="text" id="prevWorkOrder"></td>
+      <td class="label">上一工单末件SN</td>
+      <td colspan="2"><input type="text" id="prevSN"></td>
       <td class="label" style="font-size:11px;">上一工单生产日期</td>
-      <td colspan="5"><input type="date" id="prevDate"></td>
-      <td class="label" colspan="2">确认结果</td>
-      <td colspan="4">
+      <td><input type="date" id="prevDate"></td>
+      <td class="label">确认结果</td>
+      <td colspan="2">
         <div class="radio-group">
           <label><input type="radio" name="confirmResult" value="OK"> OK</label>
           <label><input type="radio" name="confirmResult" value="NG"> NG</label>
