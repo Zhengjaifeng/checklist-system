@@ -629,6 +629,32 @@ async function doViewApprove(id, action, commentOverride) {
   }
 }
 
+// 管理员保存修改
+async function adminSaveForm(id) {
+  const fields = collectFormData();
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${id}`, {
+      method: 'PATCH', headers: {'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},
+      body: JSON.stringify({ fields: fields, updated_at: new Date().toISOString() })
+    });
+    alert('保存成功');
+  } catch(e) { alert('保存失败：'+e.message); }
+}
+
+async function adminChangeStatus(id) {
+  const newStatus = document.getElementById('adminStatusChange').value;
+  if (!newStatus) { alert('请选择状态'); return; }
+  if (!confirm(`确认将状态修改为"${newStatus}"？`)) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${id}`, {
+      method: 'PATCH', headers: {'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},
+      body: JSON.stringify({ status: newStatus, updated_at: new Date().toISOString() })
+    });
+    alert('状态已修改');
+    location.reload();
+  } catch(e) { alert('修改失败：'+e.message); }
+}
+
 // 模板编辑功能
 function updateTplItem(el){
   const idx=parseInt(el.dataset.idx);
@@ -803,13 +829,16 @@ if (viewId) {
       document.body.style.paddingTop = '50px';
       // 只读模式：禁用所有输入
       document.querySelectorAll('input,select,textarea').forEach(el => { el.disabled = true; });
-      // 根据角色重新启用对应字段
-      if (canApprove && user) {
-        if (user.role === 'engineer' || user.role === 'admin') {
+      // 管理员：全部可编辑
+      if (user && user.role === 'admin') {
+        document.querySelectorAll('input,select,textarea').forEach(el => { el.disabled = false; });
+      } else if (canApprove && user) {
+        // 根据角色重新启用对应字段
+        if (user.role === 'engineer') {
           document.querySelectorAll('.eng-input').forEach(el => { el.disabled = false; });
           document.querySelectorAll('.eng-field').forEach(el => { el.style.background = '#fffbe6'; });
         }
-        if (user.role === 'qa' || user.role === 'admin') {
+        if (user.role === 'qa') {
           document.querySelectorAll('.qa-input').forEach(el => { el.disabled = false; });
           document.querySelectorAll('.qa-field').forEach(el => { el.style.background = '#fffbe6'; });
         }
@@ -819,7 +848,28 @@ if (viewId) {
       if(commentInput) commentInput.disabled = false;
       // 隐藏提交按钮，显示审批操作栏
       const btnBar = document.querySelector('.btn-bar');
-      if (canApprove) {
+      if (user && user.role === 'admin') {
+        btnBar.innerHTML = `
+          <div style="background:#f0f3ff;border:2px solid #1a73e8;border-radius:8px;padding:16px;margin-bottom:12px;">
+            <div style="font-size:15px;font-weight:bold;margin-bottom:10px;">🔑 管理员操作</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button onclick="adminSaveForm('${viewId}')" style="background:#1a73e8;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold;">💾 保存修改</button>
+              <button onclick="doBottomApprove('${viewId}','approve')" style="background:#28a745;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px;">✓ 通过</button>
+              <button onclick="doBottomApprove('${viewId}','reject')" style="background:#dc3545;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px;">✗ 驳回</button>
+              <select id="adminStatusChange" style="padding:8px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+                <option value="">修改状态...</option>
+                <option value="draft">草稿</option>
+                <option value="submitted">已提交</option>
+                <option value="engineering">工程已确认</option>
+                <option value="approved">已通过</option>
+                <option value="rejected">已驳回</option>
+              </select>
+              <button onclick="adminChangeStatus('${viewId}')" style="background:#ff9800;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:13px;">更改状态</button>
+            </div>
+          </div>
+          <a href="index.html" style="font-size:13px;">← 返回列表</a>
+          <button onclick="window.print()" style="margin-left:10px;padding:6px 16px;border:1px solid #ccc;border-radius:4px;cursor:pointer;">打印</button>`;
+      } else if (canApprove) {
         btnBar.innerHTML = `
           <div style="background:#f8f9fb;border:2px solid ${colorMap[status]};border-radius:8px;padding:16px;margin-bottom:12px;">
             <div style="font-size:15px;font-weight:bold;margin-bottom:10px;">📋 审批操作 <span style="color:${colorMap[status]};font-size:13px;margin-left:8px;">${statusMap[status]}</span></div>
