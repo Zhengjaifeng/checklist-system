@@ -115,12 +115,6 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
       <td colspan="3"><input type="text" id="workOrder"></td>
       <td class="label" style="width:40px;">批量</td>
       <td><input type="text" id="batchQty" style="width:60px;"></td>
-      <td class="label" rowspan="5" style="width:60px;">生产签名</td>
-      <td rowspan="5" style="width:70px;"><input type="text" id="prodSign1"></td>
-      <td class="label" rowspan="5" style="width:60px;">工程签名</td>
-      <td rowspan="5" style="width:70px;"><input type="text" id="engSign1"></td>
-      <td class="label" rowspan="5" style="width:60px;">质量签名</td>
-      <td rowspan="5" style="width:70px;"><input type="text" id="qaSign1"></td>
     </tr>
     <!-- R5: SN/生产线/产品料号 -->
     <tr>
@@ -180,12 +174,6 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
       </td>
       <td class="label" colspan="2">备注变更的工艺</td>
       <td colspan="7"><input type="text" id="processChangeNote"></td>
-      <td class="label" rowspan="4" style="width:60px;">生产签名</td>
-      <td rowspan="4" style="width:70px;"><input type="text" id="prodSign2"></td>
-      <td class="label" rowspan="4" style="width:60px;">工程签名</td>
-      <td rowspan="4" style="width:70px;"><input type="text" id="engSign2"></td>
-      <td class="label" rowspan="4" style="width:60px;">质量签名</td>
-      <td rowspan="4" style="width:70px;"><input type="text" id="qaSign2"></td>
     </tr>
     <tr>
       <td class="label" style="font-size:11px;">有无联络、EN/ECN需要执行</td>
@@ -255,9 +243,6 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
         <th class="val">品质-数值</th>
         <th class="okng">品质-OK/NG</th>
         <th class="remark">备注</th>
-        <th class="sign">生产签名</th>
-        <th class="sign">工程签名</th>
-        <th class="sign">质量签名</th>
       </tr>
     </thead>
     <tbody id="checkBody">
@@ -432,22 +417,12 @@ function buildTable() {
     tdRem.innerHTML = `<input type="text" name="remark_${seq}">`;
     tr.appendChild(tdRem);
 
-    // 签名列
-    ["psign", "esign", "qsign"].forEach(prefix => {
-      const td = document.createElement("td");
-      td.className = "sign";
-      td.innerHTML = `<input type="text" name="${prefix}_${seq}">`;
-      tr.appendChild(td);
-    });
-
     rows.push(tr);
     tbody.appendChild(tr);
   });
 
-  // 合并工艺段和工位的单元格
-  mergeCells(rows, 0); // 工艺段列
-  mergeCells(rows, 1); // 工位列
-  mergeSignCols(rows); // 签名列按段合并
+  mergeCells(rows, 0);
+  mergeCells(rows, 1);
 }
 
 function mergeCells(rows, colIdx) {
@@ -472,25 +447,7 @@ function mergeCells(rows, colIdx) {
   }
 }
 
-function mergeSignCols(rows) {
-  // 按工艺段合并签名列(11,12,13)
-  let i = 0;
-  while (i < rows.length) {
-    const secCell = rows[i].children[0];
-    const span = secCell.rowSpan || 1;
-    [11, 12, 13].forEach(colIdx => {
-      const cell = rows[i].children[colIdx];
-      if (span > 1) {
-        cell.rowSpan = span;
-        cell.innerHTML = `<input type="text" name="sec_sign_${i}_${colIdx}">`;
-        for (let j = i + 1; j < i + span; j++) {
-          rows[j].children[colIdx].style.display = "none";
-        }
-      }
-    });
-    i += span;
-  }
-}
+
 
 function collectFormData() {
   const data = {};
