@@ -41,6 +41,10 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
 .eng-field { background: #f0f8e8; }
 .qa-field { background: #e8f4f0; }
 .field-disabled { opacity: 0.5; pointer-events: none; background: #f5f5f5 !important; }
+.okng-btn { display: inline-block; padding: 2px 6px; margin: 1px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; border: 1px solid #ccc; background: #f8f8f8; user-select: none; }
+.okng-btn:hover { background: #e0e0e0; }
+.okng-btn.selected-ok { background: #28a745; color: #fff; border-color: #28a745; }
+.okng-btn.selected-ng { background: #dc3545; color: #fff; border-color: #dc3545; }
 .section-header { background: #b4c6e7; font-weight: bold; text-align: center; }
 .sub-section { background: #dce6f1; font-weight: bold; }
 .conclusion { margin-top: 0; }
@@ -352,7 +356,7 @@ function buildTable() {
     if (inputType === "val") {
       tdPOk.textContent = "/";
     } else {
-      tdPOk.innerHTML = `<select name="pokg_${seq}"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select>`;
+      tdPOk.innerHTML = `<input type="hidden" name="pokg_${seq}" value=""><span class="okng-btn" onclick="setOkNg(this,'OK')" data-target="pokg_${seq}">OK</span><span class="okng-btn" onclick="setOkNg(this,'NG')" data-target="pokg_${seq}">NG</span>`;
     }
     tr.appendChild(tdPOk);
 
@@ -372,7 +376,7 @@ function buildTable() {
     if (inputType === "val") {
       tdQOk.textContent = "/";
     } else {
-      tdQOk.innerHTML = `<select name="qokg_${seq}" class="qa-input"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select>`;
+      tdQOk.innerHTML = `<input type="hidden" name="qokg_${seq}" value="" class="qa-input"><span class="okng-btn qa-input" onclick="setOkNg(this,'OK')" data-target="qokg_${seq}">OK</span><span class="okng-btn qa-input" onclick="setOkNg(this,'NG')" data-target="qokg_${seq}">NG</span>`;
     }
     tr.appendChild(tdQOk);
 
@@ -694,6 +698,18 @@ async function saveTplChanges(){
   }catch(e){alert('保存失败：'+e.message);}
 }
 
+function setOkNg(el, value) {
+  const target = el.dataset.target;
+  const input = document.querySelector(`input[name="${target}"]`);
+  if (!input) return;
+  // 清除同组选中状态
+  const parent = el.parentElement;
+  parent.querySelectorAll('.okng-btn').forEach(b => { b.classList.remove('selected-ok','selected-ng'); });
+  // 设置值和样式
+  input.value = value;
+  el.classList.add(value === 'OK' ? 'selected-ok' : 'selected-ng');
+}
+
 function applyRolePermissions(){
   const user=getCurrentUser();
   if(!user)return;
@@ -756,9 +772,9 @@ async function selectTemplate(id, name){
         <td class="spec">${item.spec||''}</td>
         <td class="sc">${item.sc||'//'}</td>
         <td class="val">${item.type==='val'?'<input type=\"text\" name=\"pval_'+item.no+'\">':'/'}</td>
-        <td class="okng">${item.type==='val'?'/':'<select name=\"pokg_'+item.no+'\"><option value=\"\">-</option><option value=\"OK\">OK</option><option value=\"NG\">NG</option></select>'}</td>
+        <td class="okng">${item.type==='val'?'/':'<input type=\"hidden\" name=\"pokg_'+item.no+'\" value=\"\"><span class=\"okng-btn\" onclick=\"setOkNg(this,\'OK\')\" data-target=\"pokg_'+item.no+'\">OK</span><span class=\"okng-btn\" onclick=\"setOkNg(this,\'NG\')\" data-target=\"pokg_'+item.no+'\">NG</span>'}</td>
         <td class="val qa-field">${item.type==='val'?'<input type=\"text\" name=\"qval_'+item.no+'\" class=\"qa-input\">':'/'}</td>
-        <td class="okng qa-field">${item.type==='val'?'/':'<select name=\"qokg_'+item.no+'\" class=\"qa-input\"><option value=\"\">-</option><option value=\"OK\">OK</option><option value=\"NG\">NG</option></select>'}</td>
+        <td class="okng qa-field">${item.type==='val'?'/':'<input type=\"hidden\" name=\"qokg_'+item.no+'\" value=\"\" class=\"qa-input\"><span class=\"okng-btn qa-input\" onclick=\"setOkNg(this,\'OK\')\" data-target=\"qokg_'+item.no+'\">OK</span><span class=\"okng-btn qa-input\" onclick=\"setOkNg(this,\'NG\')\" data-target=\"qokg_'+item.no+'\">NG</span>'}</td>
         <td class="remark"><input type="text" name="remark_${item.no}"></td>
       `;
       tbody.appendChild(tr);
