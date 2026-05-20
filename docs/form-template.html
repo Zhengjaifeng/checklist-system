@@ -464,6 +464,22 @@ async function submitToCloud() {
   if (!user) { alert('请先登录！点击右上角登录按钮。'); return; }
   if (user.role !== 'operator' && user.role !== 'admin') { alert('只有生产人员可以提交'); return; }
 
+  // 验证生产必填项
+  const requiredHeader = [
+    {id:'model',name:'机型'},{id:'prodDate',name:'生产日期'},{id:'workOrder',name:'工单'},
+    {id:'sn',name:'SN'},{id:'prodLine',name:'生产线'}
+  ];
+  for (const f of requiredHeader) {
+    if (!document.getElementById(f.id)?.value) { alert(`请填写：${f.name}`); document.getElementById(f.id)?.focus(); return; }
+  }
+  // 验证首/末件选择
+  if (!document.querySelector('input[name="type"]:checked')) { alert('请选择首件/末件'); return; }
+  // 验证所有生产OK/NG（备注列不验证）
+  const allPokg = document.querySelectorAll('select[name^="pokg_"]');
+  let missingPokg = 0;
+  allPokg.forEach(sel => { if (!sel.value || sel.value === '') missingPokg++; });
+  if (missingPokg > 0) { alert(`生产OK/NG还有 ${missingPokg} 项未填写`); return; }
+
   const btn = event.target; btn.disabled = true; btn.textContent = '提交中...';
   try {
     const fields = collectFormData();
@@ -527,22 +543,20 @@ async function doBottomApprove(id, action) {
   // 验证必填字段
   if (action === 'approve') {
     if (user.role === 'engineer') {
-      // 工程师必须填完工程区域
       const engRadios = ['processChange','ecnExec','bomMatch','equipOk'];
       for (const name of engRadios) {
         if (!document.querySelector(`input[name="${name}"]:checked`)) {
-          alert('请先完成工程填写区域所有选项（有无工艺变更等）');
+          alert('请先完成工程填写区域所有选项');
           return;
         }
       }
     }
     if (user.role === 'qa') {
-      // 品质必须填完所有品质OK/NG
-      const qaSelects = document.querySelectorAll('.qa-input[name^="qokg_"]');
+      const qaSelects = document.querySelectorAll('select[name^="qokg_"]:not([disabled])');
       let missing = 0;
-      qaSelects.forEach(sel => { if (!sel.value || sel.value === '-' || sel.value === '') missing++; });
+      qaSelects.forEach(sel => { if (!sel.value || sel.value === '') missing++; });
       if (missing > 0) {
-        alert(`请先完成所有品质确认结果（还有 ${missing} 项未填写）`);
+        alert(`品质OK/NG还有 ${missing} 项未填写`);
         return;
       }
     }
