@@ -772,6 +772,17 @@ if (viewId) {
       document.body.style.paddingTop = '50px';
       // 只读模式：禁用所有输入
       document.querySelectorAll('input,select,textarea').forEach(el => { el.disabled = true; });
+      // 根据角色重新启用对应字段
+      if (canApprove && user) {
+        if (user.role === 'engineer' || user.role === 'admin') {
+          document.querySelectorAll('.eng-input').forEach(el => { el.disabled = false; });
+          document.querySelectorAll('.eng-field').forEach(el => { el.style.background = '#fffbe6'; });
+        }
+        if (user.role === 'qa' || user.role === 'admin') {
+          document.querySelectorAll('.qa-input').forEach(el => { el.disabled = false; });
+          document.querySelectorAll('.qa-field').forEach(el => { el.style.background = '#fffbe6'; });
+        }
+      }
       // 重新启用审批意见输入框
       const commentInput = document.getElementById('approveComment');
       if(commentInput) commentInput.disabled = false;
