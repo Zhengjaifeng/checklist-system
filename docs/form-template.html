@@ -78,6 +78,8 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
 
 <!-- 表单页（默认隐藏） -->
 <div class="page" id="formPage" style="display:none;">
+  <!-- 顶部状态栏 -->
+  <div id="loginStatus" style="position:sticky;top:0;background:#fff;padding:6px 16px;border-bottom:1px solid #eee;text-align:right;font-size:13px;z-index:99;"></div>
   <!-- 文件编号区 -->
   <div style="text-align:right;font-size:11px;color:#666;line-height:1.8;margin-bottom:4px;">
     文件编号：P09-S10-F01-020<br>
@@ -279,7 +281,6 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
   </div>
 
   <div class="btn-bar">
-    <div id="loginStatus" style="margin-bottom:10px;font-size:13px;"></div>
     <button class="btn-save" onclick="submitToCloud()">提交到云端</button>
     <button class="btn-export" onclick="saveForm()">保存草稿</button>
     <button class="btn-print" onclick="window.print()">打印</button>
@@ -599,7 +600,7 @@ function updateLoginStatus() {
   const user = getCurrentUser();
   const el = document.getElementById('loginStatus');
   if (user) {
-    el.innerHTML = `<span style="color:#28a745;">●</span> ${user.name} <a href="#" onclick="localStorage.removeItem('user');updateLoginStatus();" style="color:#dc3545;margin-left:8px;">退出</a>`;
+    el.innerHTML = `<span style="color:#28a745;">●</span> ${user.name} <a href="#" onclick="localStorage.removeItem('user');location.href='index.html';" style="color:#dc3545;margin-left:8px;">退出</a>`;
   } else {
     el.innerHTML = `<a href="#" onclick="showLogin()">登录</a>`;
   }
