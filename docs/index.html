@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>首末件检查表系统</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="api.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -239,7 +240,12 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f5f5; padding-top
       <button onclick="loadTemplates()" style="background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">刷新模板列表</button>
       <button onclick="createTemplate()" style="background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">+ 新建模板</button>
       <button onclick="initDefaultTemplate()" style="background:#ff9800;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">初始化默认模板</button>
+      <label style="background:#17a2b8;color:#fff;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:14px;">
+        导入Excel
+        <input type="file" accept=".xlsx,.xls" onchange="importExcelTemplate(event)" style="display:none;">
+      </label>
     </div>
+    <p style="font-size:11px;color:#888;margin-bottom:8px;">Excel格式：第1行为表头，列顺序为：工艺段 | 工位 | 序号 | 检查项目 | 规格/标准 | 类型(okng/val)</p>
     <div id="templateList"></div>
     <div id="templateEditor" style="display:none;margin-top:12px;border-top:1px solid #eee;padding-top:12px;">
       <h4>编辑模板: <span id="editTemplateName"></span></h4>
@@ -896,6 +902,43 @@ async function deleteTemplate(id,name){
     method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
   });
   loadTemplates();
+}
+
+async function importExcelTemplate(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const name=prompt('输入模板名称',file.name.replace(/\.(xlsx|xls)$/,''));
+  if(!name)return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      if(rows.length<2){alert('Excel为空');return;}
+      // 跳过表头，解析数据行
+      const items=[];
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];
+        if(!r||!r[3])continue; // 跳过空行（第4列=检查项目描述为空）
+        items.push({
+          section:String(r[0]||''),
+          station:String(r[1]||''),
+          no:items.length+1,
+          desc:String(r[3]||''),
+          spec:String(r[4]||''),
+          sc:'//',
+          type:(String(r[5]||'')).toLowerCase()==='val'?'val':'okng'
+        });
+      }
+      if(items.length===0){alert('未解析到有效检查项');return;}
+      await db.insert('templates',{name:name,items:items});
+      alert(`导入成功！共 ${items.length} 项检查项`);
+      loadTemplates();
+    }catch(err){alert('导入失败：'+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+  event.target.value='';
 }
 
 // 历史记录
