@@ -62,7 +62,22 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
 </style>
 </head>
 <body>
-<div class="page">
+<!-- 模板选择页 -->
+<div id="templateSelectPage" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f0f2f5;padding:20px;">
+  <div style="background:#fff;border-radius:12px;padding:30px;max-width:500px;width:100%;box-shadow:0 2px 12px rgba(0,0,0,.1);">
+    <h2 style="text-align:center;margin-bottom:8px;">首末件检查表</h2>
+    <p style="text-align:center;color:#666;font-size:13px;margin-bottom:20px;">请选择要填写的检查表模板</p>
+    <div id="templateSelectList" style="margin-bottom:16px;">
+      <p style="color:#888;text-align:center;">加载中...</p>
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="index.html" style="color:#1a73e8;font-size:13px;">← 返回审批列表</a>
+    </div>
+  </div>
+</div>
+
+<!-- 表单页（默认隐藏） -->
+<div class="page" id="formPage" style="display:none;">
   <!-- 文件编号区 -->
   <div style="text-align:right;font-size:11px;color:#666;line-height:1.8;margin-bottom:4px;">
     文件编号：P09-S10-F01-020<br>
@@ -272,6 +287,7 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
     <a href="index.html" style="margin-left:10px;font-size:13px;">→ 审批/历史</a>
   </div>
 </div>
+</div> <!-- end formPage -->
 
 <script src="api.js"></script>
 <script>
@@ -645,11 +661,79 @@ async function doViewApprove(id, action, commentOverride) {
 
 buildTable();
 
-// 检查是否是查看模式（URL带?id=xxx）
+// 加载模板选择列表
+async function loadTemplateSelect(){
+  const div=document.getElementById('templateSelectList');
+  try{
+    const templates=await fetch(`${SUPABASE_URL}/rest/v1/templates?order=id`,{headers:SB_HEADERS}).then(r=>r.json());
+    if(!templates||templates.length===0){
+      div.innerHTML=`<p style="color:#888;text-align:center;">暂无模板，请联系管理员导入</p>
+        <div style="text-align:center;margin-top:12px;"><button onclick="useDefaultTemplate()" style="background:#ff9800;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">使用默认模板(42项)</button></div>`;
+      return;
+    }
+    div.innerHTML=templates.map(t=>`
+      <div onclick="selectTemplate(${t.id},'${t.name.replace(/'/g,'\\\'')}')" style="padding:14px 16px;border:2px solid #eee;border-radius:8px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:border-color .2s;" onmouseover="this.style.borderColor='#1a73e8'" onmouseout="this.style.borderColor='#eee'">
+        <div><strong style="font-size:15px;">${t.name}</strong><br><span style="font-size:12px;color:#888;">${(t.items||[]).length} 项检查项</span></div>
+        <span style="color:#1a73e8;font-size:20px;">→</span>
+      </div>
+    `).join('');
+  }catch(e){div.innerHTML='<p style="color:red;">加载失败：'+e.message+'</p>';}
+}
+
+async function selectTemplate(id, name){
+  try{
+    const templates=await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${id}`,{headers:SB_HEADERS}).then(r=>r.json());
+    if(!templates||!templates[0])return;
+    const items=templates[0].items||[];
+    // 用模板数据重新渲染检查表
+    const tbody=document.getElementById('checkBody');
+    tbody.innerHTML='';
+    items.forEach(item=>{
+      // 转换为 checkItems 格式并渲染行
+      const tr=document.createElement('tr');
+      const sec=item.section||'';const sta=item.station||'';
+      tr.innerHTML=`
+        <td class="section-header">${sec}</td>
+        <td class="sub-section">${sta}</td>
+        <td>${item.no}</td>
+        <td class="item-desc">${item.desc}</td>
+        <td class="spec">${item.spec||''}</td>
+        <td class="sc">${item.sc||'//'}</td>
+        <td class="val">${item.type==='val'?'<input type=\"text\" name=\"pval_'+item.no+'\">':'/'}</td>
+        <td class="okng"><select name="pokg_${item.no}"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select></td>
+        <td class="val">${item.type==='val'?'<input type=\"text\" name=\"qval_'+item.no+'\">':'/'}</td>
+        <td class="okng"><select name="qokg_${item.no}"><option value="">-</option><option value="OK">OK</option><option value="NG">NG</option></select></td>
+        <td class="remark"><input type="text" name="remark_${item.no}"></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    // 合并单元格
+    const rows=Array.from(tbody.querySelectorAll('tr'));
+    mergeCells(rows,0);
+    mergeCells(rows,1);
+    // 保存当前模板名
+    window._currentTemplateName=name;
+    // 显示表单页
+    document.getElementById('templateSelectPage').style.display='none';
+    document.getElementById('formPage').style.display='block';
+  }catch(e){alert('加载模板失败：'+e.message);}
+}
+
+function useDefaultTemplate(){
+  // 使用硬编码的默认模板
+  window._currentTemplateName='默认模板';
+  document.getElementById('templateSelectPage').style.display='none';
+  document.getElementById('formPage').style.display='block';
+}
+
+// 初始化
 const urlParams = new URLSearchParams(location.search);
 const viewId = urlParams.get('id');
 if (viewId) {
-  // 查看模式：从云端加载数据并填充表单
+  // 查看模式：隐藏选择页，显示表单页
+  document.getElementById('templateSelectPage').style.display='none';
+  document.getElementById('formPage').style.display='block';
+  // 从云端加载数据并填充表单
   (async function loadRecord() {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${viewId}`, { headers: SB_HEADERS });
@@ -715,6 +799,8 @@ if (viewId) {
     } catch(e) { alert('加载失败：' + e.message); }
   })();
 } else {
+  // 正常模式：显示模板选择页
+  loadTemplateSelect();
   loadForm();
 }
 updateLoginStatus();
