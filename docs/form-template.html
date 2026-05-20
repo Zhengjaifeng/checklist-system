@@ -521,6 +521,33 @@ function updateLoginStatus() {
 
 async function doBottomApprove(id, action) {
   const comment = document.getElementById('bottomComment')?.value || document.getElementById('approveComment')?.value || '';
+  const user = getCurrentUser();
+  if (!user) { alert('请先登录'); return; }
+
+  // 验证必填字段
+  if (action === 'approve') {
+    if (user.role === 'engineer') {
+      // 工程师必须填完工程区域
+      const engRadios = ['processChange','ecnExec','bomMatch','equipOk'];
+      for (const name of engRadios) {
+        if (!document.querySelector(`input[name="${name}"]:checked`)) {
+          alert('请先完成工程填写区域所有选项（有无工艺变更等）');
+          return;
+        }
+      }
+    }
+    if (user.role === 'qa') {
+      // 品质必须填完所有品质OK/NG
+      const qaSelects = document.querySelectorAll('.qa-input[name^="qokg_"]');
+      let missing = 0;
+      qaSelects.forEach(sel => { if (!sel.value || sel.value === '-' || sel.value === '') missing++; });
+      if (missing > 0) {
+        alert(`请先完成所有品质确认结果（还有 ${missing} 项未填写）`);
+        return;
+      }
+    }
+  }
+
   return doViewApprove(id, action, comment);
 }
 
@@ -533,13 +560,15 @@ async function doViewApprove(id, action, commentOverride) {
   else if (user.role === 'engineer') newStatus = 'engineering';
   else newStatus = 'approved';
 
-  const btns = document.querySelectorAll('[onclick*="doViewApprove"]');
+  const btns = document.querySelectorAll('[onclick*="doViewApprove"],[onclick*="doBottomApprove"]');
   btns.forEach(b => { b.disabled = true; b.style.opacity = '0.5'; });
 
   try {
+    // 保存审批人填写的数据
+    const currentFields = collectFormData();
     await fetch(`${SUPABASE_URL}/rest/v1/forms?id=eq.${id}`, {
       method: 'PATCH', headers: SB_HEADERS,
-      body: JSON.stringify({ status: newStatus, updated_at: new Date().toISOString() })
+      body: JSON.stringify({ status: newStatus, updated_at: new Date().toISOString(), fields: currentFields })
     });
     await fetch(`${SUPABASE_URL}/rest/v1/approvals`, {
       method: 'POST', headers: SB_HEADERS,
