@@ -518,11 +518,13 @@ function showApp(){
     formTab.onclick=function(){ switchTab('admin',this); };
   }
   if(user.role==='operator'){
-    // 生产直接跳到填表页
     location.href='form-template.html';
     return;
+  } else if(user.role==='admin'){
+    document.querySelectorAll('#mainApp .page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tab-admin').classList.add('active');
+    loadUsers(); loadTemplates();
   } else {
-    // 工程/质量/管理员默认显示审批页
     document.querySelectorAll('#mainApp .page').forEach(p=>p.classList.remove('active'));
     document.getElementById('tab-approval').classList.add('active');
     loadApprovals();
