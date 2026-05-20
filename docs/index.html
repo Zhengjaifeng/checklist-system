@@ -844,13 +844,14 @@ function renderTemplateItems(){
   const div=document.getElementById('templateItems');
   if(currentTemplateItems.length===0){div.innerHTML='<p style="color:#888;">暂无检查项，请添加</p>';return;}
   div.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
-    <tr style="background:#f0f2f5;"><th style="padding:4px;">序号</th><th style="padding:4px;">工艺段</th><th style="padding:4px;">工位</th><th style="padding:4px;">描述</th><th style="padding:4px;">规格</th><th style="padding:4px;">类型</th><th style="padding:4px;">操作</th></tr>
+    <tr style="background:#f0f2f5;"><th style="padding:4px;">序号</th><th style="padding:4px;">工艺段</th><th style="padding:4px;">工位</th><th style="padding:4px;">描述</th><th style="padding:4px;">规格</th><th style="padding:4px;">特殊特性</th><th style="padding:4px;">类型</th><th style="padding:4px;">操作</th></tr>
     ${currentTemplateItems.map((item,i)=>`<tr style="border-bottom:1px solid #eee;">
       <td style="padding:4px;">${i+1}</td>
       <td style="padding:4px;">${item.section||''}</td>
       <td style="padding:4px;">${item.station||''}</td>
       <td style="padding:4px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.desc}">${item.desc}</td>
       <td style="padding:4px;font-size:11px;">${item.spec||''}</td>
+      <td style="padding:4px;font-weight:bold;">${item.sc||'//'}</td>
       <td style="padding:4px;">${item.type==='val'?'数值':'OK/NG'}</td>
       <td style="padding:4px;white-space:nowrap;">
         ${i>0?`<button onclick="moveItem(${i},-1)" style="border:none;background:#eee;cursor:pointer;padding:2px 4px;">↑</button>`:''}
@@ -931,23 +932,30 @@ async function importExcelTemplate(event){
         for(let c=0;c<=5;c++){
           const val=r[c];
           if(typeof val==='number'&&val>=1&&val<=99&&Number.isInteger(val)){
-            // 找到序号，解析该行
-            let section='',station='',desc='',spec='';
+            let section='',station='',desc='',spec='',sc='//';
             if(c>=2){section=String(r[0]||'');station=String(r[1]||r[c-1]||'');}
             else if(c===1){section=String(r[0]||'');}
             // 描述在序号后面的列
             for(let d=c+1;d<r.length;d++){
-              const cell=String(r[d]||'');
+              const cell=String(r[d]||'').trim();
               if(cell.length>5&&!desc){desc=cell;}
-              else if(desc&&cell.length>2&&!spec){spec=cell;break;}
+              else if(desc&&!spec){
+                // 检查是否是特殊特性标记
+                if(cell=='//'||cell.startsWith('【')){
+                  sc=cell;
+                } else if(cell.length>1){
+                  spec=cell;
+                }
+              } else if(desc&&spec&&(cell=='//'||cell.startsWith('【'))){
+                sc=cell; break;
+              }
             }
             if(!desc){
-              // 备选：拼接序号后所有非空单元格
               desc=r.slice(c+1).filter(x=>x&&String(x).length>2).map(String).join(' ').slice(0,200);
             }
             if(desc){
               const type=(spec&&(/[<>±≤≥]|\d+[.]\d/.test(spec)))?'val':'okng';
-              items.push({section,station,no:items.length+1,desc,spec,sc:'//',type});
+              items.push({section,station,no:items.length+1,desc,spec,sc,type});
             }
             break;
           }

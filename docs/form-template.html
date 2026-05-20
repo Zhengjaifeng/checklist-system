@@ -768,7 +768,7 @@ if (viewId) {
           <td>${idx+1}</td>
           <td class="item-desc"><input type="text" value="${item.desc||''}" data-idx="${idx}" data-field="desc" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;"></td>
           <td class="spec"><input type="text" value="${item.spec||''}" data-idx="${idx}" data-field="spec" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;"></td>
-          <td class="sc">${item.sc||'//'}</td>
+          <td class="sc"><select data-idx="${idx}" data-field="sc" onchange="updateTplItem(this)" style="font-size:11px;background:#fffbe6;border:1px dashed #999;"><option value="//" ${(item.sc||'//')!=='【3】'?'selected':''}>//</option><option value="【3】" ${item.sc==='【3】'?'selected':''}>【3】</option></select></td>
           <td><select data-idx="${idx}" data-field="type" onchange="updateTplItem(this)" style="font-size:11px;background:#fffbe6;border:1px dashed #999;"><option value="okng" ${item.type!=='val'?'selected':''}>OK/NG</option><option value="val" ${item.type==='val'?'selected':''}>数值</option></select></td>
           <td><button onclick="deleteTplItem(${idx})" style="background:#dc3545;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:11px;">删</button></td>
         `;
