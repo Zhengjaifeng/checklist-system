@@ -234,6 +234,34 @@ body { font-family:"Microsoft YaHei",sans-serif; background:#f5f5f5; padding-top
     </div>
   </div>
   <div class="card">
+    <h3 style="margin-bottom:12px;">表单模板管理</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button onclick="loadTemplates()" style="background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">刷新模板列表</button>
+      <button onclick="createTemplate()" style="background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">+ 新建模板</button>
+      <button onclick="initDefaultTemplate()" style="background:#ff9800;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">初始化默认模板</button>
+    </div>
+    <div id="templateList"></div>
+    <div id="templateEditor" style="display:none;margin-top:12px;border-top:1px solid #eee;padding-top:12px;">
+      <h4>编辑模板: <span id="editTemplateName"></span></h4>
+      <div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="text" id="tplItemSection" placeholder="工艺段(如:组装)" style="padding:6px;border:1px solid #ccc;border-radius:4px;width:80px;">
+        <input type="text" id="tplItemStation" placeholder="工位(如:PCBA取料)" style="padding:6px;border:1px solid #ccc;border-radius:4px;width:120px;">
+        <input type="text" id="tplItemDesc" placeholder="检查项描述" style="padding:6px;border:1px solid #ccc;border-radius:4px;flex:1;min-width:200px;">
+        <input type="text" id="tplItemSpec" placeholder="规格/标准(可选)" style="padding:6px;border:1px solid #ccc;border-radius:4px;width:150px;">
+        <select id="tplItemType" style="padding:6px;border:1px solid #ccc;border-radius:4px;">
+          <option value="okng">OK/NG</option>
+          <option value="val">填数值</option>
+        </select>
+        <button onclick="addTemplateItem()" style="background:#28a745;color:#fff;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;">添加项</button>
+      </div>
+      <div id="templateItems" style="max-height:400px;overflow-y:auto;"></div>
+      <div style="margin-top:12px;">
+        <button onclick="saveTemplate()" style="background:#1a73e8;color:#fff;border:none;padding:8px 20px;border-radius:4px;cursor:pointer;font-size:14px;">保存模板</button>
+        <button onclick="document.getElementById('templateEditor').style.display='none'" style="background:#999;color:#fff;border:none;padding:8px 20px;border-radius:4px;cursor:pointer;font-size:14px;margin-left:8px;">取消</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
     <h3 style="margin-bottom:12px;">数据管理</h3>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button onclick="loadAllRecords()" style="background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">查看全部记录</button>
@@ -503,7 +531,7 @@ function switchTab(tab, el){
   if(el) el.classList.add('active');
   if(tab==='approval') loadApprovals();
   if(tab==='history') loadHistory();
-  if(tab==='admin') loadUsers();
+  if(tab==='admin'){ loadUsers(); loadTemplates(); }
 }
 
 // 审批列表
@@ -750,6 +778,124 @@ async function cleanTestData(){
   }
   alert(`已清理 ${count} 条空记录`);
   loadAllRecords();
+}
+
+// === 模板管理 ===
+let currentTemplateId=null;
+let currentTemplateItems=[];
+
+async function loadTemplates(){
+  const items=await db.query('templates','order=id');
+  const div=document.getElementById('templateList');
+  if(!items||items.length===0){div.innerHTML='<p style="color:#888;">暂无模板，点击"初始化默认模板"创建</p>';return;}
+  div.innerHTML=items.map(t=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #eee;border-radius:6px;margin-bottom:6px;">
+      <strong style="flex:1;">${t.name}</strong>
+      <span style="color:#888;font-size:12px;">${(t.items||[]).length}项</span>
+      <button onclick="editTemplate(${t.id})" style="background:#1a73e8;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;">编辑</button>
+      <button onclick="deleteTemplate(${t.id},'${t.name}')" style="background:#dc3545;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;">删除</button>
+    </div>
+  `).join('');
+}
+
+async function createTemplate(){
+  const name=prompt('输入模板名称（如：CX1E_16AUD首末件检查表）');
+  if(!name)return;
+  await db.insert('templates',{name:name,items:[]});
+  loadTemplates();
+}
+
+async function initDefaultTemplate(){
+  if(!confirm('将当前42项检查项初始化为默认模板？'))return;
+  const items=checkItems.map(ci=>({section:ci.section,station:ci.station,no:ci.no,desc:ci.desc,spec:ci.spec||'',sc:ci.sc||'//',type:ci.type||'okng'}));
+  const existing=await db.query('templates','name=eq.CX1E_16AUD首末件检查表');
+  if(existing&&existing.length>0){
+    await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${existing[0].id}`,{
+      method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},
+      body:JSON.stringify({items:items,updated_at:new Date().toISOString()})
+    });
+  } else {
+    await db.insert('templates',{name:'CX1E_16AUD首末件检查表',items:items});
+  }
+  alert('默认模板已初始化（42项）');
+  loadTemplates();
+}
+
+async function editTemplate(id){
+  const items=await db.query('templates','id=eq.'+id);
+  if(!items||!items[0])return;
+  currentTemplateId=id;
+  currentTemplateItems=items[0].items||[];
+  document.getElementById('editTemplateName').textContent=items[0].name;
+  document.getElementById('templateEditor').style.display='block';
+  renderTemplateItems();
+}
+
+function renderTemplateItems(){
+  const div=document.getElementById('templateItems');
+  if(currentTemplateItems.length===0){div.innerHTML='<p style="color:#888;">暂无检查项，请添加</p>';return;}
+  div.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <tr style="background:#f0f2f5;"><th style="padding:4px;">序号</th><th style="padding:4px;">工艺段</th><th style="padding:4px;">工位</th><th style="padding:4px;">描述</th><th style="padding:4px;">规格</th><th style="padding:4px;">类型</th><th style="padding:4px;">操作</th></tr>
+    ${currentTemplateItems.map((item,i)=>`<tr style="border-bottom:1px solid #eee;">
+      <td style="padding:4px;">${i+1}</td>
+      <td style="padding:4px;">${item.section||''}</td>
+      <td style="padding:4px;">${item.station||''}</td>
+      <td style="padding:4px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.desc}">${item.desc}</td>
+      <td style="padding:4px;font-size:11px;">${item.spec||''}</td>
+      <td style="padding:4px;">${item.type==='val'?'数值':'OK/NG'}</td>
+      <td style="padding:4px;white-space:nowrap;">
+        ${i>0?`<button onclick="moveItem(${i},-1)" style="border:none;background:#eee;cursor:pointer;padding:2px 4px;">↑</button>`:''}
+        ${i<currentTemplateItems.length-1?`<button onclick="moveItem(${i},1)" style="border:none;background:#eee;cursor:pointer;padding:2px 4px;">↓</button>`:''}
+        <button onclick="removeItem(${i})" style="border:none;background:#fdd;color:#c00;cursor:pointer;padding:2px 6px;">×</button>
+      </td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+function addTemplateItem(){
+  const section=document.getElementById('tplItemSection').value.trim();
+  const station=document.getElementById('tplItemStation').value.trim();
+  const desc=document.getElementById('tplItemDesc').value.trim();
+  const spec=document.getElementById('tplItemSpec').value.trim();
+  const type=document.getElementById('tplItemType').value;
+  if(!desc){alert('请填写检查项描述');return;}
+  currentTemplateItems.push({section,station,no:currentTemplateItems.length+1,desc,spec,sc:'//',type});
+  document.getElementById('tplItemDesc').value='';
+  document.getElementById('tplItemSpec').value='';
+  renderTemplateItems();
+}
+
+function removeItem(i){
+  if(!confirm('删除该检查项？'))return;
+  currentTemplateItems.splice(i,1);
+  currentTemplateItems.forEach((item,idx)=>{item.no=idx+1;});
+  renderTemplateItems();
+}
+
+function moveItem(i,dir){
+  const j=i+dir;
+  [currentTemplateItems[i],currentTemplateItems[j]]=[currentTemplateItems[j],currentTemplateItems[i]];
+  currentTemplateItems.forEach((item,idx)=>{item.no=idx+1;});
+  renderTemplateItems();
+}
+
+async function saveTemplate(){
+  if(!currentTemplateId)return;
+  await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${currentTemplateId}`,{
+    method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},
+    body:JSON.stringify({items:currentTemplateItems,updated_at:new Date().toISOString()})
+  });
+  alert('模板已保存（'+currentTemplateItems.length+'项）');
+  document.getElementById('templateEditor').style.display='none';
+  loadTemplates();
+}
+
+async function deleteTemplate(id,name){
+  if(!confirm(`确认删除模板"${name}"？`))return;
+  await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${id}`,{
+    method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+  });
+  loadTemplates();
 }
 
 // 历史记录
