@@ -85,7 +85,7 @@ select { border: 1px solid #999; font-size: 12px; padding: 2px; border-radius: 3
     版&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;次：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A0
   </div>
 
-  <h1>首末件检查表（CX1E_16AUD）</h1>
+  <h1 id="formTitle">首末件检查表</h1>
 
   <!-- 模板编号 + 首/末件 + 版本（与下方表格合并，无独立边框） -->
   <table class="info-table" style="margin-top:6px;border-bottom:none;">
@@ -713,6 +713,7 @@ async function selectTemplate(id, name){
     mergeCells(rows,1);
     // 保存当前模板名
     window._currentTemplateName=name;
+    document.getElementById('formTitle').textContent=name;
     // 显示表单页
     document.getElementById('templateSelectPage').style.display='none';
     document.getElementById('formPage').style.display='block';
@@ -720,8 +721,8 @@ async function selectTemplate(id, name){
 }
 
 function useDefaultTemplate(){
-  // 使用硬编码的默认模板
-  window._currentTemplateName='默认模板';
+  window._currentTemplateName='CX1E_16AUD首末件检查表';
+  document.getElementById('formTitle').textContent='CX1E_16AUD首末件检查表';
   document.getElementById('templateSelectPage').style.display='none';
   document.getElementById('formPage').style.display='block';
 }
