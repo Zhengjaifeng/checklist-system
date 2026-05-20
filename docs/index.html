@@ -798,7 +798,8 @@ async function loadTemplates(){
     <div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #eee;border-radius:6px;margin-bottom:6px;">
       <strong style="flex:1;">${t.name}</strong>
       <span style="color:#888;font-size:12px;">${(t.items||[]).length}项</span>
-      <button onclick="editTemplate(${t.id})" style="background:#1a73e8;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;">编辑</button>
+      <button onclick="viewTemplate(${t.id})" style="background:#1a73e8;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;">查看</button>
+      <button onclick="editTemplate(${t.id})" style="background:#ff9800;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;">编辑</button>
       <button onclick="deleteTemplate(${t.id},'${t.name}')" style="background:#dc3545;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;">删除</button>
     </div>
   `).join('');
@@ -894,6 +895,10 @@ async function saveTemplate(){
   alert('模板已保存（'+currentTemplateItems.length+'项）');
   document.getElementById('templateEditor').style.display='none';
   loadTemplates();
+}
+
+function viewTemplate(id){
+  location.href='form-template.html?template='+id+'&admin=1';
 }
 
 async function deleteTemplate(id,name){

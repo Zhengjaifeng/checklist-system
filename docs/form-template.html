@@ -570,6 +570,37 @@ async function doViewApprove(id, action, commentOverride) {
   }
 }
 
+// 模板编辑功能
+function updateTplItem(el){
+  const idx=parseInt(el.dataset.idx);
+  const field=el.dataset.field;
+  window._adminTemplateItems[idx][field]=el.value;
+}
+
+function deleteTplItem(idx){
+  if(!confirm('删除第'+(idx+1)+'项？'))return;
+  window._adminTemplateItems.splice(idx,1);
+  window._adminTemplateItems.forEach((item,i)=>{item.no=i+1;});
+  location.href='form-template.html?template='+window._adminTemplateId+'&admin=1';
+}
+
+function addTplItemRow(){
+  window._adminTemplateItems.push({section:'',station:'',no:window._adminTemplateItems.length+1,desc:'新检查项',spec:'',sc:'//',type:'okng'});
+  location.href='form-template.html?template='+window._adminTemplateId+'&admin=1';
+}
+
+async function saveTplChanges(){
+  const items=window._adminTemplateItems;
+  items.forEach((item,i)=>{item.no=i+1;});
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${window._adminTemplateId}`,{
+      method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},
+      body:JSON.stringify({items:items,updated_at:new Date().toISOString()})
+    });
+    alert('模板已保存（'+items.length+'项）');
+  }catch(e){alert('保存失败：'+e.message);}
+}
+
 buildTable();
 
 // 加载模板选择列表
@@ -641,7 +672,11 @@ function useDefaultTemplate(){
 // 初始化
 const urlParams = new URLSearchParams(location.search);
 const viewId = urlParams.get('id');
+const adminTemplateId = urlParams.get('template');
+const isAdmin = urlParams.get('admin') === '1';
+
 if (viewId) {
+  // 查看已提交表单模式
   // 查看模式：隐藏选择页，显示表单页
   document.getElementById('templateSelectPage').style.display='none';
   document.getElementById('formPage').style.display='block';
@@ -709,6 +744,67 @@ if (viewId) {
         btnBar.innerHTML = `<a href="index.html" class="btn-save" style="text-decoration:none;display:inline-block;text-align:center;">← 返回审批列表</a> <button class="btn-print" onclick="window.print()">打印</button>`;
       }
     } catch(e) { alert('加载失败：' + e.message); }
+  })();
+} else if (adminTemplateId) {
+  // 管理员模板编辑模式
+  document.getElementById('templateSelectPage').style.display='none';
+  document.getElementById('formPage').style.display='block';
+  (async function loadAdminTemplate(){
+    try{
+      const templates=await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${adminTemplateId}`,{headers:SB_HEADERS}).then(r=>r.json());
+      if(!templates||!templates[0]){alert('模板不存在');return;}
+      const tpl=templates[0];
+      const items=tpl.items||[];
+      document.getElementById('formTitle').textContent=tpl.name;
+
+      // 渲染检查项（可编辑）
+      const tbody=document.getElementById('checkBody');
+      tbody.innerHTML='';
+      items.forEach((item,idx)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td class="section-header"><input type="text" value="${item.section||''}" data-idx="${idx}" data-field="section" onchange="updateTplItem(this)" style="width:50px;border:1px dashed #999;background:#fffbe6;text-align:center;font-size:12px;padding:2px;"></td>
+          <td class="sub-section"><input type="text" value="${item.station||''}" data-idx="${idx}" data-field="station" onchange="updateTplItem(this)" style="width:80px;border:1px dashed #999;background:#fffbe6;text-align:center;font-size:12px;padding:2px;"></td>
+          <td>${idx+1}</td>
+          <td class="item-desc"><input type="text" value="${item.desc||''}" data-idx="${idx}" data-field="desc" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;"></td>
+          <td class="spec"><input type="text" value="${item.spec||''}" data-idx="${idx}" data-field="spec" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;"></td>
+          <td class="sc">${item.sc||'//'}</td>
+          <td><select data-idx="${idx}" data-field="type" onchange="updateTplItem(this)" style="font-size:11px;background:#fffbe6;border:1px dashed #999;"><option value="okng" ${item.type!=='val'?'selected':''}>OK/NG</option><option value="val" ${item.type==='val'?'selected':''}>数值</option></select></td>
+          <td><button onclick="deleteTplItem(${idx})" style="background:#dc3545;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:11px;">删</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // 添加新检查项的行
+      const addTr=document.createElement('tr');
+      addTr.innerHTML=`<td colspan="8" style="text-align:center;padding:8px;">
+        <button onclick="addTplItemRow()" style="background:#28a745;color:#fff;border:none;padding:6px 20px;border-radius:4px;cursor:pointer;">+ 添加检查项</button>
+      </td>`;
+      tbody.appendChild(addTr);
+
+      // 保存当前模板数据
+      window._adminTemplateId=adminTemplateId;
+      window._adminTemplateItems=items;
+      window._adminTemplateName=tpl.name;
+
+      // 状态栏
+      const statusBar=document.createElement('div');
+      statusBar.style.cssText='position:fixed;top:0;left:0;right:0;background:#ff9800;color:#fff;text-align:center;padding:8px 16px;font-size:14px;font-weight:bold;z-index:9999;display:flex;align-items:center;justify-content:center;gap:16px;';
+      statusBar.innerHTML=`
+        <span>🔧 模板编辑模式 — ${tpl.name}</span>
+        <span style="font-size:12px;background:rgba(255,255,255,.3);padding:2px 8px;border-radius:4px;">${items.length}项</span>
+        <button onclick="saveTplChanges()" style="background:#28a745;color:#fff;border:2px solid #fff;padding:6px 20px;border-radius:4px;cursor:pointer;font-weight:bold;">💾 保存修改</button>
+        <a href="index.html" style="color:#fff;text-decoration:underline;font-size:13px;">← 返回管理</a>
+      `;
+      document.body.prepend(statusBar);
+      document.body.style.paddingTop='50px';
+
+      // 隐藏提交按钮
+      document.querySelector('.btn-bar').innerHTML=`
+        <button onclick="saveTplChanges()" class="btn-save" style="background:#28a745;">💾 保存模板修改</button>
+        <a href="index.html" style="margin-left:10px;font-size:13px;">← 返回管理</a>
+      `;
+    }catch(e){alert('加载模板失败：'+e.message);}
   })();
 } else {
   // 正常模式：显示模板选择页
