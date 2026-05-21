@@ -983,9 +983,12 @@ if (viewId) {
           <td class="sub-section"><input type="text" value="${item.station||''}" data-idx="${idx}" data-field="station" onchange="updateTplItem(this)" style="width:80px;border:1px dashed #999;background:#fffbe6;text-align:center;font-size:12px;padding:2px;"></td>
           <td>${idx+1}</td>
           <td class="item-desc"><input type="text" value="${item.desc||''}" data-idx="${idx}" data-field="desc" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;"></td>
-          <td class="spec"><input type="text" value="${item.spec||''}" data-idx="${idx}" data-field="spec" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;"></td>
+          <td class="spec"><input type="text" value="${item.spec||''}" data-idx="${idx}" data-field="spec" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;" title="填写规格用于自动核对（如 3.8±0.5g、<0.1mA）"></td>
           <td class="sc"><input type="text" value="${item.sc||'//'}" data-idx="${idx}" data-field="sc" onchange="updateTplItem(this)" style="width:40px;border:1px dashed #999;background:#fffbe6;text-align:center;font-size:12px;padding:2px;"></td>
-          <td><select data-idx="${idx}" data-field="type" onchange="updateTplItem(this)" style="font-size:11px;background:#fffbe6;border:1px dashed #999;"><option value="okng" ${item.type!=='val'?'selected':''}>OK/NG</option><option value="val" ${item.type==='val'?'selected':''}>数值</option></select></td>
+          <td><select data-idx="${idx}" data-field="type" onchange="updateTplItem(this);saveTplChanges().then(()=>{location.href='form-template.html?template='+window._adminTemplateId+'&admin=1'})" style="font-size:11px;background:#fffbe6;border:1px dashed #999;padding:2px;">
+            <option value="okng" ${item.type!=='val'?'selected':''}>OK/NG</option>
+            <option value="val" ${item.type==='val'?'selected':''}>数值</option>
+          </select></td>
           <td><button onclick="deleteTplItem(${idx})" style="background:#dc3545;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:11px;">删</button></td>
         `;
         tbody.appendChild(tr);
@@ -1014,6 +1017,19 @@ if (viewId) {
       `;
       document.body.prepend(statusBar);
       document.body.style.paddingTop='50px';
+
+      // 添加编辑说明
+      const guide = document.createElement('div');
+      guide.style.cssText = 'background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:10px 14px;margin:10px 30px;font-size:12px;line-height:1.8;';
+      guide.innerHTML = `
+        <strong>📝 编辑说明：</strong><br>
+        • <b>类型</b>：选"数值"后该项填表时显示输入框并自动核对，选"OK/NG"显示点击按钮<br>
+        • <b>规格/标准</b>：设置数值项的合格范围，填表时自动判定<br>
+        • 支持格式：<code>3.8±0.5g</code>、<code>&lt;0.1mA</code>、<code>5s±0.5s</code>、<code>3A~5A</code>、<code>-1.5~+0.5dB</code><br>
+        • 切换类型后会自动保存并刷新页面
+      `;
+      const checkTable = document.querySelector('.check-table');
+      if (checkTable) checkTable.parentElement.insertBefore(guide, checkTable);
 
       // 隐藏提交按钮
       document.querySelector('.btn-bar').innerHTML=`
