@@ -688,6 +688,15 @@ function addTplItemRow(){
   location.href='form-template.html?template='+window._adminTemplateId+'&admin=1';
 }
 
+async function saveTplSilent(){
+  if(!currentTemplateId)return;
+  currentTemplateItems.forEach((item,i)=>{item.no=i+1;});
+  await fetch(`${SUPABASE_URL}/rest/v1/templates?id=eq.${currentTemplateId}`,{
+    method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},
+    body:JSON.stringify({items:currentTemplateItems,updated_at:new Date().toISOString()})
+  });
+}
+
 async function saveTplChanges(){
   const items=window._adminTemplateItems;
   items.forEach((item,i)=>{item.no=i+1;});
@@ -985,7 +994,7 @@ if (viewId) {
           <td class="item-desc"><input type="text" value="${item.desc||''}" data-idx="${idx}" data-field="desc" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;"></td>
           <td class="spec"><input type="text" value="${item.spec||''}" data-idx="${idx}" data-field="spec" onchange="updateTplItem(this)" style="width:100%;border:1px dashed #999;background:#fffbe6;font-size:12px;padding:2px;" title="填写规格用于自动核对（如 3.8±0.5g、<0.1mA）"></td>
           <td class="sc"><input type="text" value="${item.sc||'//'}" data-idx="${idx}" data-field="sc" onchange="updateTplItem(this)" style="width:40px;border:1px dashed #999;background:#fffbe6;text-align:center;font-size:12px;padding:2px;"></td>
-          <td><select data-idx="${idx}" data-field="type" onchange="updateTplItem(this);saveTplChanges().then(()=>{location.href='form-template.html?template='+window._adminTemplateId+'&admin=1'})" style="font-size:11px;background:#fffbe6;border:1px dashed #999;padding:2px;">
+          <td><select data-idx="${idx}" data-field="type" onchange="updateTplItem(this);saveTplSilent().then(()=>{location.href='form-template.html?template='+window._adminTemplateId+'&admin=1'})" style="font-size:11px;background:#fffbe6;border:1px dashed #999;padding:2px;">
             <option value="okng" ${item.type!=='val'?'selected':''}>OK/NG</option>
             <option value="val" ${item.type==='val'?'selected':''}>数值</option>
           </select></td>
