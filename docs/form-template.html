@@ -741,7 +741,7 @@ function parseSpec(spec) {
   if (!spec) return null;
   spec = spec.trim();
   let m;
-  m = spec.match(/([\d.]+)\s*[a-zA-Zμu%℃°]*\s*[±]\s*([\d.]+)/);
+  m = spec.match(/([\d.]+)\s*[a-zA-Zμu%℃°\s]*[±]\s*([\d.]+)/);
   if (m) { const c=parseFloat(m[1]),t=parseFloat(m[2]); return {min:c-t, max:c+t, minStrict:false, maxStrict:false}; }
   // 严格小于 <
   m = spec.match(/[<＜]\s*([\d.]+)/);
