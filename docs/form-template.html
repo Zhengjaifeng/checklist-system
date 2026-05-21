@@ -732,12 +732,15 @@ function parseSpec(spec) {
 
 function autoCheckValue(input) {
   const spec = input.dataset.spec;
-  const val = parseFloat(input.value);
+  const rawVal = input.value.trim();
   const indicator = input.nextElementSibling;
   if (!indicator || !indicator.classList.contains('auto-result')) return;
-  if (isNaN(val) || !spec) { indicator.textContent=''; indicator.style.background=''; return; }
+  if (!rawVal || !spec) { indicator.textContent=''; indicator.style.background=''; return; }
+  const numMatch = rawVal.match(/([-+]?\d*\.?\d+)/);
+  if (!numMatch) { indicator.textContent=''; indicator.style.background=''; return; }
+  const val = parseFloat(numMatch[1]);
   const range = parseSpec(spec);
-  if (!range) { indicator.textContent=''; return; }
+  if (!range) { indicator.textContent=''; indicator.style.background=''; return; }
   const ok = val >= range.min && val <= range.max;
   indicator.textContent = ok ? '✓OK' : '✗NG';
   indicator.style.color = '#fff';
