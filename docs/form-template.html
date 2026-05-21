@@ -741,24 +741,26 @@ function parseSpec(spec) {
   if (!spec) return null;
   spec = spec.trim();
   let m;
-  // 格式: X±Y（允许数字后带单位，如 5s±0.5s、3.8g±0.5g）
   m = spec.match(/([\d.]+)\s*[a-zA-Zμu%℃°]*\s*[±]\s*([\d.]+)/);
-  if (m) { const c=parseFloat(m[1]),t=parseFloat(m[2]); return {min:c-t, max:c+t}; }
-  // 格式: <X 或 ≤X（如 <3.785A、≤0.1mA）
-  m = spec.match(/[<≤＜]\s*([\d.]+)/);
-  if (m) return {min:-Infinity, max:parseFloat(m[1])};
-  // 格式: >X 或 ≥X
-  m = spec.match(/[>≥＞]\s*([\d.]+)/);
-  if (m) return {min:parseFloat(m[1]), max:Infinity};
-  // 格式: A~B（允许单位，如 -1.5dB~+0.5dB）
+  if (m) { const c=parseFloat(m[1]),t=parseFloat(m[2]); return {min:c-t, max:c+t, minStrict:false, maxStrict:false}; }
+  // 严格小于 <
+  m = spec.match(/[<＜]\s*([\d.]+)/);
+  if (m && !spec.match(/[≤]/)) return {min:-Infinity, max:parseFloat(m[1]), minStrict:false, maxStrict:true};
+  // 小于等于 ≤
+  m = spec.match(/[≤]\s*([\d.]+)/);
+  if (m) return {min:-Infinity, max:parseFloat(m[1]), minStrict:false, maxStrict:false};
+  // 严格大于 >
+  m = spec.match(/[>＞]\s*([\d.]+)/);
+  if (m && !spec.match(/[≥]/)) return {min:parseFloat(m[1]), max:Infinity, minStrict:true, maxStrict:false};
+  // 大于等于 ≥
+  m = spec.match(/[≥]\s*([\d.]+)/);
+  if (m) return {min:parseFloat(m[1]), max:Infinity, minStrict:false, maxStrict:false};
   m = spec.match(/([-+]?[\d.]+)\s*[a-zA-Zμu%℃°]*\s*[~～]\s*([-+]?[\d.]+)/);
-  if (m) return {min:parseFloat(m[1]), max:parseFloat(m[2])};
-  // 格式: A-B（如 2-3A、0.05-0.3A）
+  if (m) return {min:parseFloat(m[1]), max:parseFloat(m[2]), minStrict:false, maxStrict:false};
   m = spec.match(/([\d.]+)\s*[a-zA-Zμu%℃°]*\s*[-]\s*([\d.]+)/);
-  if (m&&parseFloat(m[1])<parseFloat(m[2])) return {min:parseFloat(m[1]), max:parseFloat(m[2])};
-  // 格式: 纯数字（如 标准值13.5V → 精确匹配±5%）
+  if (m&&parseFloat(m[1])<parseFloat(m[2])) return {min:parseFloat(m[1]), max:parseFloat(m[2]), minStrict:false, maxStrict:false};
   m = spec.match(/([\d.]+)\s*[a-zA-Zμu%℃°V]+/);
-  if (m&&!spec.match(/[<>≤≥±~～-]/)) { const v=parseFloat(m[1]); return {min:v*0.95, max:v*1.05}; }
+  if (m&&!spec.match(/[<>≤≥±~～-]/)) { const v=parseFloat(m[1]); return {min:v*0.95, max:v*1.05, minStrict:false, maxStrict:false}; }
   return null;
 }
 
@@ -773,7 +775,9 @@ function autoCheckValue(input) {
   const val = parseFloat(numMatch[1]);
   const range = parseSpec(spec);
   if (!range) { indicator.textContent=''; indicator.style.background=''; return; }
-  const ok = val >= range.min && val <= range.max;
+  const minOk = range.minStrict ? val > range.min : val >= range.min;
+  const maxOk = range.maxStrict ? val < range.max : val <= range.max;
+  const ok = minOk && maxOk;
   indicator.textContent = ok ? '✓OK' : '✗NG';
   indicator.style.color = '#fff';
   indicator.style.background = ok ? '#28a745' : '#dc3545';
