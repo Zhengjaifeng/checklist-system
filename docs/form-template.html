@@ -717,16 +717,24 @@ function parseSpec(spec) {
   if (!spec) return null;
   spec = spec.trim();
   let m;
-  m = spec.match(/([\d.]+)\s*[±]\s*([\d.]+)/);
+  // 格式: X±Y（允许数字后带单位，如 5s±0.5s、3.8g±0.5g）
+  m = spec.match(/([\d.]+)\s*[a-zA-Zμu%℃°]*\s*[±]\s*([\d.]+)/);
   if (m) { const c=parseFloat(m[1]),t=parseFloat(m[2]); return {min:c-t, max:c+t}; }
+  // 格式: <X 或 ≤X（如 <3.785A、≤0.1mA）
   m = spec.match(/[<≤＜]\s*([\d.]+)/);
   if (m) return {min:-Infinity, max:parseFloat(m[1])};
+  // 格式: >X 或 ≥X
   m = spec.match(/[>≥＞]\s*([\d.]+)/);
   if (m) return {min:parseFloat(m[1]), max:Infinity};
-  m = spec.match(/([-+]?[\d.]+)\s*[~～]\s*([-+]?[\d.]+)/);
+  // 格式: A~B（允许单位，如 -1.5dB~+0.5dB）
+  m = spec.match(/([-+]?[\d.]+)\s*[a-zA-Zμu%℃°]*\s*[~～]\s*([-+]?[\d.]+)/);
   if (m) return {min:parseFloat(m[1]), max:parseFloat(m[2])};
-  m = spec.match(/([\d.]+)\s*[-]\s*([\d.]+)/);
+  // 格式: A-B（如 2-3A、0.05-0.3A）
+  m = spec.match(/([\d.]+)\s*[a-zA-Zμu%℃°]*\s*[-]\s*([\d.]+)/);
   if (m&&parseFloat(m[1])<parseFloat(m[2])) return {min:parseFloat(m[1]), max:parseFloat(m[2])};
+  // 格式: 纯数字（如 标准值13.5V → 精确匹配±5%）
+  m = spec.match(/([\d.]+)\s*[a-zA-Zμu%℃°V]+/);
+  if (m&&!spec.match(/[<>≤≥±~～-]/)) { const v=parseFloat(m[1]); return {min:v*0.95, max:v*1.05}; }
   return null;
 }
 
